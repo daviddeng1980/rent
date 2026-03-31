@@ -1,7 +1,6 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify
 import os
 import uuid
-from datetime import datetime
 from PIL import Image
 
 upload_bp = Blueprint('upload', __name__)
@@ -9,7 +8,7 @@ upload_bp = Blueprint('upload', __name__)
 UPLOAD_FOLDER = 'uploads'
 THUMBNAIL_FOLDER = 'uploads/thumbs'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-MAX_IMAGE_SIZE = 10 * 1024 * 1024
+MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB
 MIN_WIDTH = 300
 MIN_HEIGHT = 300
 COMPRESS_QUALITY = 85
@@ -46,21 +45,24 @@ def upload_image():
     try:
         img = Image.open(file)
 
+        # 转换为 RGB 模式
         if img.mode in ('RGBA', 'LA', 'P'):
             img = img.convert('RGB')
 
+        # 检查最小尺寸
         if img.width < MIN_WIDTH or img.height < MIN_HEIGHT:
-            return jsonify({'error': f'Image too small. Minimum size: {MIN_WIDTH}x{MIN_HEIGHT}px'}), 400
+            return jsonify({'error': f'图片尺寸太小，最小需要 {MIN_WIDTH}x{MIN_HEIGHT} 像素'}), 400
 
-        if file.content_length and file.content_length > MAX_IMAGE_SIZE:
-            img.save(filepath, 'JPEG', quality=COMPRESS_QUALITY, optimize=True)
-        else:
-            if img.width > 1920 or img.height > 1920:
-                ratio = min(1920 / img.width, 1920 / img.height)
-                new_size = (int(img.width * ratio), int(img.height * ratio))
-                img = img.resize(new_size, Image.Resampling.LANCZOS)
-            img.save(filepath, 'JPEG', quality=COMPRESS_QUALITY, optimize=True)
+        # 压缩过大图片
+        if img.width > 1920 or img.height > 1920:
+            ratio = min(1920 / img.width, 1920 / img.height)
+            new_size = (int(img.width * ratio), int(img.height * ratio))
+            img = img.resize(new_size, Image.Resampling.LANCZOS)
 
+        # 保存压缩后的原图
+        img.save(filepath, 'JPEG', quality=COMPRESS_QUALITY, optimize=True)
+
+        # 生成缩略图
         img.thumbnail(THUMBNAIL_SIZE, Image.Resampling.LANCZOS)
         img.save(thumb_filepath, 'JPEG', quality=80, optimize=True)
 

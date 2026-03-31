@@ -78,6 +78,27 @@
         .detail-item { padding: 12px; background: var(--gray-50); border-radius: 8px; }
         .detail-label { font-size: 12px; color: var(--gray-500); margin-bottom: 4px; }
         .detail-value { font-size: 14px; font-weight: 500; }
+        /* 图片上传组件样式 */
+        .image-upload-area { border: 2px dashed var(--gray-300); border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--gray-50); }
+        .image-upload-area:hover { border-color: var(--primary); background: #dbeafe; }
+        .image-upload-area.dragover { border-color: var(--primary); background: #dbeafe; }
+        .image-preview-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 12px; }
+        .image-preview-item { position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid var(--gray-200); }
+        .image-preview-item img { width: 100%; height: 100%; object-fit: cover; }
+        .image-preview-item .remove-btn { position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; border-radius: 50%; background: rgba(0,0,0,0.6); color: white; border: none; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+        .image-preview-item .cover-badge { position: absolute; bottom: 2px; left: 2px; padding: 2px 6px; border-radius: 4px; background: var(--primary); color: white; font-size: 10px; }
+        .image-preview-item .set-cover-btn { position: absolute; bottom: 2px; right: 2px; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.6); color: white; border: none; cursor: pointer; font-size: 10px; }
+        .property-thumb { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; }
+        .property-card-with-thumb { display: flex; gap: 16px; }
+        .property-card-with-thumb .property-info { flex: 1; }
+        .image-gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+        .image-gallery-item { aspect-ratio: 1; border-radius: 8px; overflow: hidden; cursor: pointer; }
+        .image-gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s; }
+        .image-gallery-item:hover img { transform: scale(1.05); }
+        .lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
+        .lightbox.show { display: flex; }
+        .lightbox img { max-width: 90%; max-height: 90%; object-fit: contain; }
+        .lightbox .close-btn { position: absolute; top: 20px; right: 20px; width: 40px; height: 40px; border-radius: 50%; background: white; border: none; cursor: pointer; font-size: 20px; }
     </style>
 </head>
 <body>
@@ -111,9 +132,16 @@
         </div>
     </div>
 
+    <div class="lightbox" id="lightbox">
+        <button class="close-btn" onclick="closeLightbox()">&times;</button>
+        <img id="lightboxImg" src="" alt="">
+    </div>
+
     <script>
         const API = window.location.origin;
         let currentPage = 'dashboard';
+        let pendingImages = [];
+        let editingPropertyId = null;
 
         async function api(url, options = {}) {
             try {
@@ -203,22 +231,27 @@
                 <div class="card">
                     ${(data || []).length > 0 ? `
                         <table>
-                            <thead><tr><th>名称</th><th>地址</th><th>面积</th><th>指导租金</th><th>状态</th><th>操作</th></tr></thead>
+                            <thead><tr><th style="width: 80px;">图片</th><th>名称</th><th>地址</th><th>面积</th><th>指导租金</th><th>状态</th><th>操作</th></tr></thead>
                             <tbody>
-                                ${data.map(p => `
-                                    <tr>
-                                        <td>${p.name}</td>
-                                        <td>${p.address}</td>
-                                        <td>${p.area ? p.area + '㎡' : '-'}</td>
-                                        <td>${p.rent_guide ? '¥' + p.rent_guide.toLocaleString() : '-'}</td>
-                                        <td><span class="status-badge ${p.status === '出租中' ? 'status-rented' : 'status-vacant'}">${p.status}</span></td>
-                                        <td class="actions">
-                                            <button class="btn btn-secondary btn-sm" onclick="viewProperty(${p.id})">查看</button>
-                                            <button class="btn btn-secondary btn-sm" onclick="editProperty(${p.id})">编辑</button>
-                                            <button class="btn btn-danger btn-sm" onclick="deleteProperty(${p.id})">删除</button>
-                                        </td>
-                                    </tr>
-                                `).join('')}
+                                ${data.map(p => {
+                                    const images = p.images || [];
+                                    const thumb = images.length > 0 ? images[0].thumbnail : null;
+                                    return `
+                                        <tr>
+                                            <td>${thumb ? `<img src="${API}${thumb}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">` : '<span style="color: var(--gray-500);">-</span>'}</td>
+                                            <td>${p.name}</td>
+                                            <td>${p.address}</td>
+                                            <td>${p.area ? p.area + '㎡' : '-'}</td>
+                                            <td>${p.rent_guide ? '¥' + p.rent_guide.toLocaleString() : '-'}</td>
+                                            <td><span class="status-badge ${p.status === '出租中' ? 'status-rented' : 'status-vacant'}">${p.status}</span></td>
+                                            <td class="actions">
+                                                <button class="btn btn-secondary btn-sm" onclick="viewProperty(${p.id})">查看</button>
+                                                <button class="btn btn-secondary btn-sm" onclick="editProperty(${p.id})">编辑</button>
+                                                <button class="btn btn-danger btn-sm" onclick="deleteProperty(${p.id})">删除</button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
                             </tbody>
                         </table>
                     ` : '<div class="empty">暂无房产，点击上方按钮添加</div>'}
@@ -227,6 +260,7 @@
         }
 
         function showPropertyModal() {
+            pendingImages = [];
             showModal('添加房产', `
                 <form onsubmit="addProperty(event)">
                     <div class="form-row">
@@ -274,7 +308,16 @@
                         <div class="form-group"><label>贷款金额</label><input name="loan_amount" type="number" step="0.01"></div>
                         <div class="form-group"><label>贷款利率</label><input name="loan_rate" type="number" step="0.0001" placeholder="如 0.05 表示 5%"></div>
                     </div>
-                    <div class="form-group"><label>备注</label><textarea name="remark" rows="3"></textarea></div>
+                    <div class="form-group"><label>备注</label><textarea name="remark" rows="2"></textarea></div>
+                    <div class="form-group">
+                        <label>房产图片 (最多10张)</label>
+                        <div class="image-upload-area" id="uploadArea">
+                            <div>点击或拖拽上传图片</div>
+                            <div style="font-size: 12px; color: var(--gray-500); margin-top: 4px;">支持 JPG/PNG/GIF/WebP</div>
+                        </div>
+                        <input type="file" id="fileInput" accept="image/*" multiple style="display: none;">
+                        <div id="imagePreviewContainer" class="image-preview-grid"></div>
+                    </div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
                         <button type="submit" class="btn btn-primary">添加</button>
@@ -288,6 +331,7 @@
             const form = e.target;
             const furnitureEls = form.querySelectorAll('input[name="furniture"]:checked');
             const furniture = Array.from(furnitureEls).map(el => el.value).join(',');
+            const images = pendingImages.map(img => ({ image: img.image, thumbnail: img.thumbnail }));
 
             const data = {
                 name: form.name.value,
@@ -303,7 +347,7 @@
                 loan_amount: form.loan_amount.value ? parseFloat(form.loan_amount.value) : null,
                 loan_rate: form.loan_rate.value ? parseFloat(form.loan_rate.value) : null,
                 remark: form.remark.value,
-                images: []
+                images: images
             };
 
             const result = await api('/properties', {
@@ -322,9 +366,19 @@
             if (p.error) return alert(p.error);
 
             const analysis = await api(`/analysis/property/${id}`);
+            const images = p.images || [];
 
             showModal('房产详情', `
-                <div class="detail-grid">
+                ${images.length > 0 ? `
+                    <div class="image-gallery">
+                        ${images.map((img, idx) => `
+                            <div class="image-gallery-item" onclick="openLightbox('${img.image}')">
+                                <img src="${API}${img.thumbnail}" alt="图片${idx + 1}">
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+                <div class="detail-grid" style="${images.length > 0 ? 'margin-top: 16px;' : ''}">
                     <div class="detail-item"><div class="detail-label">名称</div><div class="detail-value">${p.name}</div></div>
                     <div class="detail-item"><div class="detail-label">状态</div><div class="detail-value"><span class="status-badge ${p.status === '出租中' ? 'status-rented' : 'status-vacant'}">${p.status}</span></div></div>
                     <div class="detail-item"><div class="detail-label">地址</div><div class="detail-value">${p.address}</div></div>
@@ -365,6 +419,9 @@
         async function editProperty(id) {
             const p = await api(`/properties/${id}`);
             if (p.error) return alert(p.error);
+
+            editingPropertyId = id;
+            pendingImages = p.images || [];
 
             showModal('编辑房产', `
                 <form onsubmit="saveProperty(event, ${id})">
@@ -413,13 +470,23 @@
                         <div class="form-group"><label>贷款金额</label><input name="loan_amount" type="number" step="0.01" value="${p.loan_amount || ''}"></div>
                         <div class="form-group"><label>贷款利率</label><input name="loan_rate" type="number" step="0.0001" value="${p.loan_rate || ''}"></div>
                     </div>
-                    <div class="form-group"><label>备注</label><textarea name="remark" rows="3">${p.remark || ''}</textarea></div>
+                    <div class="form-group"><label>备注</label><textarea name="remark" rows="2">${p.remark || ''}</textarea></div>
+                    <div class="form-group">
+                        <label>房产图片 (最多10张)</label>
+                        <div class="image-upload-area" id="uploadArea">
+                            <div>点击或拖拽上传图片</div>
+                            <div style="font-size: 12px; color: var(--gray-500); margin-top: 4px;">支持 JPG/PNG/GIF/WebP</div>
+                        </div>
+                        <input type="file" id="fileInput" accept="image/*" multiple style="display: none;">
+                        <div id="imagePreviewContainer" class="image-preview-grid"></div>
+                    </div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
                         <button type="submit" class="btn btn-primary">保存</button>
                     </div>
                 </form>
             `);
+            renderImagePreviews();
         }
 
         async function saveProperty(e, id) {
@@ -427,6 +494,7 @@
             const form = e.target;
             const furnitureEls = form.querySelectorAll('input[name="furniture"]:checked');
             const furniture = Array.from(furnitureEls).map(el => el.value).join(',');
+            const images = pendingImages.map(img => ({ image: img.image, thumbnail: img.thumbnail }));
 
             const data = {
                 name: form.name.value,
@@ -442,7 +510,7 @@
                 loan_amount: form.loan_amount.value ? parseFloat(form.loan_amount.value) : null,
                 loan_rate: form.loan_rate.value ? parseFloat(form.loan_rate.value) : null,
                 remark: form.remark.value,
-                images: []
+                images: images
             };
 
             const result = await api(`/properties/${id}`, {
@@ -854,10 +922,88 @@
             document.getElementById('modalTitle').textContent = title;
             document.getElementById('modalBody').innerHTML = body;
             document.getElementById('modal').classList.add('show');
+            initImageUpload();
         }
 
         function closeModal() {
             document.getElementById('modal').classList.remove('show');
+            pendingImages = [];
+            editingPropertyId = null;
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.remove('show');
+        }
+
+        function openLightbox(imagePath) {
+            document.getElementById('lightboxImg').src = API + imagePath;
+            document.getElementById('lightbox').classList.add('show');
+        }
+
+        function initImageUpload() {
+            const uploadArea = document.getElementById('uploadArea');
+            if (!uploadArea) return;
+
+            uploadArea.addEventListener('click', () => document.getElementById('fileInput').click());
+            uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+            uploadArea.addEventListener('dragleave', () => { uploadArea.classList.remove('dragover'); });
+            uploadArea.addEventListener('drop', (e) => { e.preventDefault(); uploadArea.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+            document.getElementById('fileInput')?.addEventListener('change', (e) => { handleFiles(e.target.files); });
+        }
+
+        async function handleFiles(files) {
+            const maxImages = 10;
+            const currentCount = pendingImages.length;
+            const remaining = maxImages - currentCount;
+            if (remaining <= 0) { alert('最多只能上传10张图片'); return; }
+
+            const filesToUpload = Array.from(files).slice(0, remaining);
+            for (const file of filesToUpload) {
+                if (!file.type.startsWith('image/')) { alert('请上传图片文件'); continue; }
+                if (file.size < 50 * 1024) { alert('图片太小，最小需要50KB'); continue; }
+
+                const formData = new FormData();
+                formData.append('file', file);
+                if (editingPropertyId) formData.append('property_id', editingPropertyId);
+
+                try {
+                    const res = await fetch(API + '/upload/image', { method: 'POST', body: formData });
+                    const result = await res.json();
+                    if (result.error) { alert(result.error); continue; }
+                    pendingImages.push(result);
+                    renderImagePreviews();
+                } catch (e) { console.error(e); alert('上传失败'); }
+            }
+        }
+
+        function renderImagePreviews() {
+            const container = document.getElementById('imagePreviewContainer');
+            if (!container) return;
+            container.innerHTML = pendingImages.map((img, index) => `
+                <div class="image-preview-item">
+                    <img src="${API}${img.thumbnail}" alt="预览">
+                    ${index === 0 ? '<span class="cover-badge">封面</span>' : `<button class="set-cover-btn" onclick="setCover(${index})">设封面</button>`}
+                    <button class="remove-btn" onclick="removeImage(${index})">&times;</button>
+                </div>
+            `).join('');
+        }
+
+        function setCover(index) {
+            if (index === 0) return;
+            const item = pendingImages.splice(index, 1)[0];
+            pendingImages.unshift(item);
+            renderImagePreviews();
+        }
+
+        async function removeImage(index) {
+            const img = pendingImages[index];
+            pendingImages.splice(index, 1);
+            fetch(API + '/upload/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: img.image })
+            });
+            renderImagePreviews();
         }
 
         document.querySelectorAll('.nav-item').forEach(el => el.addEventListener('click', () => navigate(el.dataset.page)));
