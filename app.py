@@ -14,6 +14,10 @@ db.init_app(app)
 def serve_upload(filename):
     return send_from_directory('uploads', filename)
 
+@app.route('/contracts/<path:filename>')
+def serve_contract(filename):
+    return send_from_directory('contracts', filename)
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -67,6 +71,7 @@ from routes.payment import payment_bp
 from routes.lease import lease_bp
 from routes.analysis import analysis_bp
 from routes.upload import upload_bp
+from routes.contract import contract_bp
 
 app.register_blueprint(property_bp)
 app.register_blueprint(tenant_bp)
@@ -74,6 +79,7 @@ app.register_blueprint(payment_bp)
 app.register_blueprint(lease_bp)
 app.register_blueprint(analysis_bp)
 app.register_blueprint(upload_bp)
+app.register_blueprint(contract_bp)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)

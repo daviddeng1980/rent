@@ -35,11 +35,17 @@ class Lease(db.Model):
     deposit = db.Column(db.Float, default=0)
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
-    status = db.Column(db.String(20), default='active')
+    status = db.Column(db.String(20), default='pending')  # pending/active/renewed/terminated/expired
+    contract_files = db.Column(db.Text, default='[]')  # JSON数组
+    original_lease_id = db.Column(db.Integer, db.ForeignKey('lease.id'), nullable=True)
+    renewed_lease_id = db.Column(db.Integer, db.ForeignKey('lease.id'), nullable=True)
+    termination_reason = db.Column(db.String(50))  # 终止原因
+    termination_date = db.Column(db.Date)  # 终止日期
     remark = db.Column(db.Text)
     create_time = db.Column(db.DateTime, default=db.func.now())
 
     payments = db.relationship('Payment', backref='lease', lazy=True)
+    changes = db.relationship('LeaseChange', backref='lease', lazy=True, foreign_keys='LeaseChange.lease_id')
 
     @property
     def is_active(self):
@@ -62,7 +68,17 @@ class Payment(db.Model):
     lease_id = db.Column(db.Integer, db.ForeignKey('lease.id'), nullable=False)
     due_date = db.Column(db.Date, nullable=False)
     amount = db.Column(db.Float, nullable=False)
-    status = db.Column(db.String(20), default='pending')
+    status = db.Column(db.String(20), default='pending')  # pending/overdue/paid/cancelled
     paid_date = db.Column(db.Date)
     remark = db.Column(db.String(200))
+    create_time = db.Column(db.DateTime, default=db.func.now())
+
+class LeaseChange(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    lease_id = db.Column(db.Integer, db.ForeignKey('lease.id'), nullable=False)
+    change_type = db.Column(db.String(20), nullable=False)  # amendment/termination
+    old_values = db.Column(db.Text)  # JSON
+    new_values = db.Column(db.Text)  # JSON
+    effective_date = db.Column(db.Date)
+    reason = db.Column(db.String(200))
     create_time = db.Column(db.DateTime, default=db.func.now())
