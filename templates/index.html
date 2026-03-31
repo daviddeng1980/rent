@@ -739,7 +739,11 @@
 
         async function addLease(e, activateNow = false) {
             e.preventDefault();
-            const form = e.target;
+            const form = e.target.closest('form') || e.target.form;
+            if (!form) {
+                alert('表单错误');
+                return;
+            }
             const data = {
                 name: form.name.value,
                 property_id: parseInt(form.property_id.value),
