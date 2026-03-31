@@ -993,14 +993,43 @@
             `;
         }
 
+        function validatePhone(value) {
+            if (!value) return '手机号不能为空';
+            if (!/^1[3-9]\d{9}$/.test(value)) return '手机号格式错误，应为11位数字（以1开头）';
+            return null;
+        }
+
+        function validateIdCard(value) {
+            if (!value) return null;
+            if (!/^[1-9]\d{5}(19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$/.test(value)) return '身份证号格式错误，应为18位';
+            return null;
+        }
+
+        function showError(inputEl, message) {
+            const errorEl = inputEl.parentElement.querySelector('.field-error');
+            if (errorEl) {
+                errorEl.textContent = message || '';
+                errorEl.style.display = message ? 'block' : 'none';
+            }
+            inputEl.style.borderColor = message ? 'var(--danger)' : '';
+        }
+
         async function showTenantModal() {
             showModal('添加租客', `
                 <form onsubmit="addTenant(event)">
                     <div class="form-row">
                         <div class="form-group"><label>姓名 *</label><input name="name" required></div>
-                        <div class="form-group"><label>电话 *</label><input name="phone" required></div>
+                        <div class="form-group">
+                            <label>电话 *</label>
+                            <input name="phone" required placeholder="11位手机号" oninput="showError(this, validatePhone(this.value))">
+                            <div class="field-error" style="color:var(--danger);font-size:12px;display:none;"></div>
+                        </div>
                     </div>
-                    <div class="form-group"><label>身份证</label><input name="id_card"></div>
+                    <div class="form-group">
+                        <label>身份证</label>
+                        <input name="id_card" placeholder="18位身份证号" oninput="showError(this, validateIdCard(this.value))">
+                        <div class="field-error" style="color:var(--danger);font-size:12px;display:none;"></div>
+                    </div>
                     <div class="form-row">
                         <div class="form-group"><label>紧急联系人</label><input name="emergency_contact"></div>
                         <div class="form-group"><label>紧急联系电话</label><input name="emergency_phone"></div>
@@ -1017,6 +1046,12 @@
         async function addTenant(e) {
             e.preventDefault();
             const form = e.target;
+            const phoneError = validatePhone(form.phone.value);
+            const idCardError = validateIdCard(form.id_card.value);
+
+            if (phoneError) { showError(form.phone, phoneError); form.phone.focus(); return; }
+            if (idCardError) { showError(form.id_card, idCardError); form.id_card.focus(); return; }
+
             const data = {
                 name: form.name.value,
                 phone: form.phone.value,
@@ -1045,9 +1080,17 @@
                 <form onsubmit="saveTenant(event, ${id})">
                     <div class="form-row">
                         <div class="form-group"><label>姓名 *</label><input name="name" value="${t.name}" required></div>
-                        <div class="form-group"><label>电话 *</label><input name="phone" value="${t.phone}" required></div>
+                        <div class="form-group">
+                            <label>电话 *</label>
+                            <input name="phone" value="${t.phone}" required placeholder="11位手机号" oninput="showError(this, validatePhone(this.value))">
+                            <div class="field-error" style="color:var(--danger);font-size:12px;display:none;"></div>
+                        </div>
                     </div>
-                    <div class="form-group"><label>身份证</label><input name="id_card" value="${t.id_card || ''}"></div>
+                    <div class="form-group">
+                        <label>身份证</label>
+                        <input name="id_card" value="${t.id_card || ''}" placeholder="18位身份证号" oninput="showError(this, validateIdCard(this.value))">
+                        <div class="field-error" style="color:var(--danger);font-size:12px;display:none;"></div>
+                    </div>
                     <div class="form-row">
                         <div class="form-group"><label>紧急联系人</label><input name="emergency_contact" value="${t.emergency_contact || ''}"></div>
                         <div class="form-group"><label>紧急联系电话</label><input name="emergency_phone" value="${t.emergency_phone || ''}"></div>
@@ -1064,6 +1107,12 @@
         async function saveTenant(e, id) {
             e.preventDefault();
             const form = e.target;
+            const phoneError = validatePhone(form.phone.value);
+            const idCardError = validateIdCard(form.id_card.value);
+
+            if (phoneError) { showError(form.phone, phoneError); form.phone.focus(); return; }
+            if (idCardError) { showError(form.id_card, idCardError); form.id_card.focus(); return; }
+
             const data = {
                 name: form.name.value,
                 phone: form.phone.value,
