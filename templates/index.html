@@ -685,14 +685,24 @@
                         </select>
                     </div>
                     <div class="form-row">
-                        <div class="form-group"><label>月租金 *</label><input name="rent_amount" type="number" step="0.01" required></div>
-                        <div class="form-group"><label>租金日</label><input name="rent_day" type="number" value="1" min="1" max="28"></div>
+                        <div class="form-group"><label>租金 *</label><input name="rent_amount" type="number" step="0.01" required placeholder="每期租金金额"></div>
+                        <div class="form-group"><label>支付周期 *</label>
+                            <select name="payment_cycle" required>
+                                <option value="1">月付</option>
+                                <option value="3">季付(3个月)</option>
+                                <option value="6">半年付(6个月)</option>
+                                <option value="12">年付(12个月)</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group"><label>押金</label><input name="deposit" type="number" step="0.01"></div>
-                        <div class="form-group"><label>租期开始 *</label><input name="start_date" type="date" required></div>
+                        <div class="form-group"><label>租金到期日</label><input name="rent_day" type="number" value="1" min="1" max="28" placeholder="每月几号付租(1-28)"></div>
+                        <div class="form-group"><label>押金</label><input name="deposit" type="number" step="0.01" placeholder="押金金额"></div>
                     </div>
-                    <div class="form-group"><label>租期结束 *</label><input name="end_date" type="date" required></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>租期开始 *</label><input name="start_date" type="date" required></div>
+                        <div class="form-group"><label>租期结束 *</label><input name="end_date" type="date" required></div>
+                    </div>
                     <div class="form-group"><label>备注</label><textarea name="remark" rows="2"></textarea></div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
@@ -721,6 +731,7 @@
                 tenant_id: form.tenant_id.value ? parseInt(form.tenant_id.value) : null,
                 rent_amount: parseFloat(form.rent_amount.value),
                 rent_day: parseInt(form.rent_day.value) || 1,
+                payment_cycle: parseInt(form.payment_cycle.value) || 1,
                 deposit: form.deposit.value ? parseFloat(form.deposit.value) : 0,
                 start_date: form.start_date.value,
                 end_date: form.end_date.value,
@@ -751,29 +762,63 @@
             if (l.error) return alert(l.error);
 
             const statusClass = l.status === 'active' ? 'status-active' : l.status === 'pending' ? 'status-pending' : 'status-ended';
+            const cycleMap = {1: '月付', 3: '季付', 6: '半年付', 12: '年付'};
             showModal('租约详情', `
                 <div class="detail-grid">
                     <div class="detail-item"><div class="detail-label">租约名称</div><div class="detail-value">${l.name || '租约 #' + l.id}</div></div>
                     <div class="detail-item"><div class="detail-label">状态</div><div class="detail-value"><span class="status-badge ${statusClass}">${l.status_text}</span></div></div>
                     <div class="detail-item"><div class="detail-label">房产</div><div class="detail-value">${l.property_name}</div></div>
                     <div class="detail-item"><div class="detail-label">租客</div><div class="detail-value">${l.tenant_name || '待分配'}</div></div>
-                    <div class="detail-item"><div class="detail-label">月租金</div><div class="detail-value" style="color: var(--success);">¥${l.rent_amount}</div></div>
-                    <div class="detail-item"><div class="detail-label">租金日</div><div class="detail-value">每月${l.rent_day}日</div></div>
+                    <div class="detail-item"><div class="detail-label">租金</div><div class="detail-value" style="color: var(--success);">¥${l.rent_amount}/${cycleMap[l.payment_cycle] || '月'}</div></div>
+                    <div class="detail-item"><div class="detail-label">租金到期日</div><div class="detail-value">每月${l.rent_day}日</div></div>
                     <div class="detail-item"><div class="detail-label">押金</div><div class="detail-value">¥${l.deposit || 0}</div></div>
                     <div class="detail-item"><div class="detail-label">租期</div><div class="detail-value">${l.start_date} ~ ${l.end_date}</div></div>
                 </div>
                 ${l.termination_reason ? `<div class="detail-grid" style="margin-top:16px;"><div class="detail-item"><div class="detail-label">终止原因</div><div class="detail-value">${l.termination_reason}</div></div><div class="detail-item"><div class="detail-label">终止日期</div><div class="detail-value">${l.termination_date}</div></div></div>` : ''}
-                ${l.contract_files && l.contract_files.length > 0 ? `
-                    <div style="margin-top:16px;"><h4>合同文件</h4>
-                        <div class="contract-files">
-                            ${l.contract_files.map(f => `<div class="contract-file-item"><a href="/contracts/${l.id}/${f.filename}" target="_blank">${f.original_name}</a></div>`).join('')}
-                        </div>
+                <div style="margin-top:16px;">
+                    <h4>合同文件</h4>
+                    <div class="contract-upload-area" id="contractUploadArea">
+                        <input type="file" id="contractFileInput" accept=".pdf,.jpg,.jpeg,.png,.gif" style="display:none;" onchange="uploadContract(this, ${l.id})">
+                        <button class="btn btn-secondary" onclick="document.getElementById('contractFileInput').click()">+ 上传合同</button>
+                        <span style="color:var(--gray-500);font-size:12px;margin-left:8px;">支持 PDF、图片格式，最大20MB</span>
                     </div>
-                ` : ''}
+                    ${l.contract_files && l.contract_files.length > 0 ? `
+                        <div class="contract-files" style="margin-top:12px;">
+                            ${l.contract_files.map(f => `<div class="contract-file-item">
+                                <a href="/contracts/${l.id}/${f.filename}" target="_blank">${f.original_name}</a>
+                                <button class="btn btn-danger btn-sm" style="margin-left:8px;padding:2px 8px;" onclick="deleteContract(${l.id}, ${f.id})">删除</button>
+                            </div>`).join('')}
+                        </div>
+                    ` : '<div style="color:var(--gray-500);font-size:13px;margin-top:8px;">暂无合同文件</div>'}
+                </div>
                 <div class="form-actions" style="margin-top:20px;">
                     <button class="btn btn-secondary" onclick="closeModal()">关闭</button>
                 </div>
             `);
+        }
+
+        async function uploadContract(input, leaseId) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch(API + `/leases/${leaseId}/contracts`, { method: 'POST', body: formData });
+                const text = await res.text();
+                let result;
+                try { result = JSON.parse(text); } catch { alert('上传失败：响应格式错误'); return; }
+                if (result.error) { alert(result.error); return; }
+                viewLease(leaseId);  // 刷新视图
+            } catch (e) { console.error(e); alert('上传失败'); }
+        }
+
+        async function deleteContract(leaseId, fileId) {
+            if (!confirm('确定要删除这个合同文件吗？')) return;
+            const result = await api(`/contracts/${leaseId}/${fileId}`, { method: 'DELETE' });
+            if (result.error) return alert(result.error);
+            viewLease(leaseId);  // 刷新视图
         }
 
         async function showRenewLeaseModal(id) {

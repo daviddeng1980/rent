@@ -20,10 +20,15 @@ def generate_payments(lease):
     """为租约生成付款计划"""
     start = datetime.strptime(lease.start_date.strftime('%Y-%m-%d'), '%Y-%m-%d')
     end = datetime.strptime(lease.end_date.strftime('%Y-%m-%d'), '%Y-%m-%d')
+    payment_cycle = lease.payment_cycle or 1  # 默认为月付
 
     current = datetime(start.year, start.month, lease.rent_day)
     if current < start:
-        current = datetime(start.year, start.month + 1, lease.rent_day) if start.month < 12 else datetime(start.year + 1, 1, lease.rent_day)
+        # 计算下一个付款日
+        month = start.month + payment_cycle
+        year = start.year + (month - 1) // 12
+        month = (month - 1) % 12 + 1
+        current = datetime(year, month, lease.rent_day)
 
     while current <= end:
         # 检查是否已存在
@@ -32,15 +37,16 @@ def generate_payments(lease):
             payment = Payment(
                 lease_id=lease.id,
                 due_date=current.date(),
-                amount=lease.rent_amount,
+                amount=lease.rent_amount * payment_cycle,  # 根据支付周期计算金额
                 status='pending'
             )
             db.session.add(payment)
 
-        if current.month == 12:
-            current = datetime(current.year + 1, 1, lease.rent_day)
-        else:
-            current = datetime(current.year, current.month + 1, lease.rent_day)
+        # 根据支付周期计算下一个付款日
+        month = current.month + payment_cycle
+        year = current.year + (month - 1) // 12
+        month = (month - 1) % 12 + 1
+        current = datetime(year, month, lease.rent_day)
 
 @lease_bp.route('/leases', methods=['GET'])
 def get_leases():
@@ -130,6 +136,13 @@ def add_lease():
     """创建租约，初始状态为待生效"""
     data = request.get_json()
 
+    # 日期转换
+    try:
+        start_date = datetime.strptime(data['start_date'], '%Y-%m-%d').date() if data.get('start_date') else None
+        end_date = datetime.strptime(data['end_date'], '%Y-%m-%d').date() if data.get('end_date') else None
+    except (ValueError, TypeError) as e:
+        return jsonify({"error": f"日期格式错误: {str(e)}，正确格式：YYYY-MM-DD"}), 400
+
     # 检查房产是否已有生效中的租约
     property_id = data['property_id']
     if data.get('activate_now'):
@@ -143,9 +156,10 @@ def add_lease():
         tenant_id=data.get('tenant_id'),
         rent_amount=data['rent_amount'],
         rent_day=data.get('rent_day', 1),
+        payment_cycle=data.get('payment_cycle', 1),
         deposit=data.get('deposit', 0),
-        start_date=data['start_date'],
-        end_date=data['end_date'],
+        start_date=start_date,
+        end_date=end_date,
         status='pending',
         remark=data.get('remark')
     )

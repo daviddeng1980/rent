@@ -31,7 +31,8 @@ class Lease(db.Model):
     property_id = db.Column(db.Integer, db.ForeignKey('property.id'), nullable=False)
     tenant_id = db.Column(db.Integer, db.ForeignKey('tenant.id'))
     rent_amount = db.Column(db.Float, nullable=False)
-    rent_day = db.Column(db.Integer, default=1)
+    rent_day = db.Column(db.Integer, default=1)  # 每月租金到期日(1-28)
+    payment_cycle = db.Column(db.Integer, default=1)  # 支付周期(月数): 1=月付, 3=季付, 6=半年付, 12=年付
     deposit = db.Column(db.Float, default=0)
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
