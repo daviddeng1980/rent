@@ -263,7 +263,7 @@
                                             <div class="reminder-property">${r.property_name}</div>
                                             <div class="reminder-tenant">${r.tenant_name || '待分配'}</div>
                                         </div>
-                                        <div class="reminder-amount">¥${r.amount.toLocaleString()}</div>
+                                        <div class="reminder-amount">¥${(r.amount || 0).toLocaleString()}</div>
                                         <div class="reminder-date ${r.days_until_due <= 7 ? 'urgent' : ''}">
                                             ${r.is_overdue ? `<span style="color: #dc2626;">已逾期</span>` : `${r.days_until_due}天后`}
                                             <div style="font-size:12px;color:#666;">${r.due_date}</div>
