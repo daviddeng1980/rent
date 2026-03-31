@@ -172,10 +172,7 @@ def add_lease():
             return jsonify({"error": "请先选择租客"}), 400
         l.status = 'active'
         generate_payments(l)
-        # 更新房产状态
-        property = Property.query.get(property_id)
-        if property:
-            property.status = '出租中'
+        # Property.status 是计算属性，会自动根据 active lease 状态返回正确值
 
     db.session.commit()
     return jsonify({"message": "租约创建成功", "id": l.id, "status": l.status}), 201
@@ -200,11 +197,7 @@ def activate_lease(id):
 
     l.status = 'active'
     generate_payments(l)
-
-    # 更新房产状态
-    property = Property.query.get(l.property_id)
-    if property:
-        property.status = '出租中'
+    # Property.status 是计算属性，会自动根据 active lease 状态返回正确值
 
     db.session.commit()
     return jsonify({"message": "租约已生效", "id": l.id}), 200
@@ -357,10 +350,7 @@ def terminate_lease(id):
         Lease.status == 'active',
         Lease.id != id
     ).first()
-    if not other_active:
-        property = Property.query.get(l.property_id)
-        if property:
-            property.status = '空置'
+    # Property.status 是计算属性，会自动根据 active lease 状态返回正确值
 
     # 记录变更历史
     change = LeaseChange(
