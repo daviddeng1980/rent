@@ -124,3 +124,22 @@ def delete_tenant(id):
     db.session.delete(t)
     db.session.commit()
     return jsonify({"message": "Tenant deleted"}), 200
+
+@tenant_bp.route('/tenants/<int:id>/lease_status', methods=['GET'])
+def tenant_lease_status(id):
+    """检查租客是否有进行中的租约"""
+    t = Tenant.query.get(id)
+    if not t:
+        return jsonify({"error": "Tenant not found"}), 404
+
+    active_leases = [l for l in t.leases if l.status == 'active']
+    if active_leases:
+        lease = active_leases[0]
+        return jsonify({
+            "has_active_lease": True,
+            "lease_id": lease.id,
+            "lease_name": lease.name,
+            "property_name": lease.property.name if lease.property else None,
+            "message": f"该租客已有进行中的租约：{lease.property.name if lease.property else ''}"
+        }), 200
+    return jsonify({"has_active_lease": False}), 200
