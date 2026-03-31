@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>租金管理系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #16a34a;
+            --warning: #ca8a04;
+            --danger: #dc2626;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--gray-50); color: var(--gray-900); }
+        .sidebar { position: fixed; left: 0; top: 0; width: 260px; height: 100vh; background: var(--gray-900); color: white; padding: 24px 0; overflow-y: auto; }
+        .logo { font-size: 20px; font-weight: 700; padding: 0 24px 32px; }
+        .nav-item { padding: 12px 24px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,0.7); }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: var(--primary); color: white; }
+        .nav-section { color: rgba(255,255,255,0.4); font-size: 11px; text-transform: uppercase; padding: 16px 24px 8px; letter-spacing: 1px; }
+        .main { margin-left: 260px; min-height: 100vh; }
+        .header { background: white; padding: 16px 32px; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 24px; font-weight: 600; }
+        .content { padding: 32px; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 24px; margin-bottom: 24px; }
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 32px; }
+        .stat-card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .stat-label { color: var(--gray-500); font-size: 14px; margin-bottom: 8px; }
+        .stat-value { font-size: 32px; font-weight: 700; }
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-secondary { background: var(--gray-200); color: var(--gray-700); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--gray-200); }
+        th { background: var(--gray-50); font-weight: 600; color: var(--gray-700); }
+        tr:hover { background: var(--gray-50); }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; border-radius: 12px; padding: 32px; width: 600px; max-width: 90%; max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .modal-header h2 { font-size: 20px; font-weight: 600; }
+        .close { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--gray-100); cursor: pointer; font-size: 18px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 500; color: var(--gray-700); font-size: 14px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 14px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; border-top: 1px solid var(--gray-200); padding-top: 16px; }
+        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .status-rented { background: #dcfce7; color: var(--success); }
+        .status-vacant { background: #fef3c7; color: var(--warning); }
+        .status-active { background: #dbeafe; color: var(--primary); }
+        .status-ended { background: var(--gray-200); color: var(--gray-600); }
+        .status-paid { background: #dcfce7; color: var(--success); }
+        .status-pending { background: #fef9c3; color: var(--warning); }
+        .empty { text-align: center; padding: 64px 32px; color: var(--gray-500); }
+        .property-card { border: 1px solid var(--gray-200); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+        .property-name { font-size: 18px; font-weight: 600; }
+        .property-address { color: var(--gray-500); font-size: 14px; margin-top: 4px; }
+        .tag { display: inline-block; padding: 4px 8px; background: var(--gray-100); border-radius: 4px; font-size: 12px; color: var(--gray-600); margin-right: 8px; }
+        .actions { display: flex; gap: 8px; }
+        .filter-bar { display: flex; gap: 12px; margin-bottom: 24px; }
+        .filter-bar select { padding: 10px 16px; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 14px; }
+        .detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        .detail-item { padding: 12px; background: var(--gray-50); border-radius: 8px; }
+        .detail-label { font-size: 12px; color: var(--gray-500); margin-bottom: 4px; }
+        .detail-value { font-size: 14px; font-weight: 500; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">租金管理</div>
+        <div class="nav-section">概览</div>
+        <div class="nav-item active" data-page="dashboard">仪表盘</div>
+        <div class="nav-section">核心管理</div>
+        <div class="nav-item" data-page="properties">房产管理</div>
+        <div class="nav-item" data-page="leases">租约管理</div>
+        <div class="nav-item" data-page="tenants">租客管理</div>
+        <div class="nav-item" data-page="payments">付款管理</div>
+        <div class="nav-section">分析</div>
+        <div class="nav-item" data-page="analysis">利润分析</div>
+    </div>
+
+    <div class="main">
+        <div class="header">
+            <h1 id="pageTitle">仪表盘</h1>
+        </div>
+        <div class="content" id="content"></div>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">添加</h2>
+                <button class="close" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        const API = window.location.origin;
+        let currentPage = 'dashboard';
+
+        async function api(url, options = {}) {
+            try {
+                const res = await fetch(API + url, options);
+                return await res.json();
+            } catch (e) {
+                console.error(e);
+                return { error: '请求失败' };
+            }
+        }
+
+        function navigate(page) {
+            currentPage = page;
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.querySelector(`[data-page="${page}"]`).classList.add('active');
+            document.getElementById('pageTitle').textContent = {
+                dashboard: '仪表盘',
+                properties: '房产管理',
+                leases: '租约管理',
+                tenants: '租客管理',
+                payments: '付款管理',
+                analysis: '利润分析'
+            }[page];
+            loadPage(page);
+        }
+
+        async function loadPage(page) {
+            switch(page) {
+                case 'dashboard': await loadDashboard(); break;
+                case 'properties': await loadProperties(); break;
+                case 'leases': await loadLeases(); break;
+                case 'tenants': await loadTenants(); break;
+                case 'payments': await loadPayments(); break;
+                case 'analysis': await loadAnalysis(); break;
+            }
+        }
+
+        async function loadDashboard() {
+            const [summary, properties, leases] = await Promise.all([
+                api('/analysis/summary'),
+                api('/properties'),
+                api('/leases')
+            ]);
+
+            document.getElementById('content').innerHTML = `
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-label">房产总数</div>
+                        <div class="stat-value">${summary.total_properties || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">出租中</div>
+                        <div class="stat-value" style="color: var(--success);">${summary.rented_count || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">空置</div>
+                        <div class="stat-value" style="color: var(--warning);">${summary.vacant_count || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">月租金收入</div>
+                        <div class="stat-value">¥${(summary.income?.total_monthly_rent || 0).toLocaleString()}</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-bottom: 16px;">房产列表</h3>
+                    ${(properties || []).length > 0 ? properties.map(p => `
+                        <div class="property-card">
+                            <div style="display: flex; justify-content: space-between;">
+                                <div>
+                                    <div class="property-name">${p.name}</div>
+                                    <div class="property-address">${p.address}</div>
+                                </div>
+                                <span class="status-badge ${p.status === '出租中' ? 'status-rented' : 'status-vacant'}">${p.status}</span>
+                            </div>
+                        </div>
+                    `).join('') : '<div class="empty">暂无房产</div>'}
+                </div>
+            `;
+        }
+
+        async function loadProperties() {
+            const data = await api('/properties');
+            document.getElementById('content').innerHTML = `
+                <div class="filter-bar">
+                    <button class="btn btn-primary" onclick="showPropertyModal()">+ 添加房产</button>
+                </div>
+                <div class="card">
+                    ${(data || []).length > 0 ? `
+                        <table>
+                            <thead><tr><th>名称</th><th>地址</th><th>面积</th><th>指导租金</th><th>状态</th><th>操作</th></tr></thead>
+                            <tbody>
+                                ${data.map(p => `
+                                    <tr>
+                                        <td>${p.name}</td>
+                                        <td>${p.address}</td>
+                                        <td>${p.area ? p.area + '㎡' : '-'}</td>
+                                        <td>${p.rent_guide ? '¥' + p.rent_guide.toLocaleString() : '-'}</td>
+                                        <td><span class="status-badge ${p.status === '出租中' ? 'status-rented' : 'status-vacant'}">${p.status}</span></td>
+                                        <td class="actions">
+                                            <button class="btn btn-secondary btn-sm" onclick="viewProperty(${p.id})">查看</button>
+                                            <button class="btn btn-secondary btn-sm" onclick="editProperty(${p.id})">编辑</button>
+                                            <button class="btn btn-danger btn-sm" onclick="deleteProperty(${p.id})">删除</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    ` : '<div class="empty">暂无房产，点击上方按钮添加</div>'}
+                </div>
+            `;
+        }
+
+        function showPropertyModal() {
+            showModal('添加房产', `
+                <form onsubmit="addProperty(event)">
+                    <div class="form-row">
+                        <div class="form-group"><label>名称 *</label><input name="name" required></div>
+                        <div class="form-group"><label>地址 *</label><input name="address" required></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>面积 (㎡)</label><input name="area" type="number"></div>
+                        <div class="form-group"><label>类型</label>
+                            <select name="property_type">
+                                <option value="">请选择</option>
+                                <option value="住宅">住宅</option>
+                                <option value="商铺">商铺</option>
+                                <option value="公寓">公寓</option>
+                                <option value="别墅">别墅</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group"><label>装修</label>
+                        <select name="decoration">
+                            <option value="">请选择</option>
+                            <option value="毛坯">毛坯</option>
+                            <option value="简装">简装</option>
+                            <option value="精装">精装</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>家具家电</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            ${['床', '空调', '冰箱', '洗衣机', '电视', '沙发', '热水器', '油烟机'].map(f => `
+                                <label style="display: flex; align-items: center; gap: 4px; padding: 6px 12px; background: var(--gray-100); border-radius: 6px; cursor: pointer;">
+                                    <input type="checkbox" name="furniture" value="${f}"> ${f}
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>指导租金</label><input name="rent_guide" type="number" step="0.01"></div>
+                        <div class="form-group"><label>月物业费</label><input name="property_fee" type="number" step="0.01"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>购买日期</label><input name="purchase_date" type="date"></div>
+                        <div class="form-group"><label>购买价格</label><input name="purchase_price" type="number" step="0.01"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>贷款金额</label><input name="loan_amount" type="number" step="0.01"></div>
+                        <div class="form-group"><label>贷款利率</label><input name="loan_rate" type="number" step="0.0001" placeholder="如 0.05 表示 5%"></div>
+                    </div>
+                    <div class="form-group"><label>备注</label><textarea name="remark" rows="3"></textarea></div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                        <button type="submit" class="btn btn-primary">添加</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        async function addProperty(e) {
+            e.preventDefault();
+            const form = e.target;
+            const furnitureEls = form.querySelectorAll('input[name="furniture"]:checked');
+            const furniture = Array.from(furnitureEls).map(el => el.value).join(',');
+
+            const data = {
+                name: form.name.value,
+                address: form.address.value,
+                area: form.area.value ? parseFloat(form.area.value) : null,
+                property_type: form.property_type.value || null,
+                decoration: form.decoration.value || null,
+                furniture: furniture || null,
+                rent_guide: form.rent_guide.value ? parseFloat(form.rent_guide.value) : null,
+                property_fee: form.property_fee.value ? parseFloat(form.property_fee.value) : null,
+                purchase_date: form.purchase_date.value || null,
+                purchase_price: form.purchase_price.value ? parseFloat(form.purchase_price.value) : null,
+                loan_amount: form.loan_amount.value ? parseFloat(form.loan_amount.value) : null,
+                loan_rate: form.loan_rate.value ? parseFloat(form.loan_rate.value) : null,
+                remark: form.remark.value,
+                images: []
+            };
+
+            const result = await api('/properties', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (result.error) return alert(result.error);
+            closeModal();
+            loadProperties();
+        }
+
+        async function viewProperty(id) {
+            const p = await api(`/properties/${id}`);
+            if (p.error) return alert(p.error);
+
+            const analysis = await api(`/analysis/property/${id}`);
+
+            showModal('房产详情', `
+                <div class="detail-grid">
+                    <div class="detail-item"><div class="detail-label">名称</div><div class="detail-value">${p.name}</div></div>
+                    <div class="detail-item"><div class="detail-label">状态</div><div class="detail-value"><span class="status-badge ${p.status === '出租中' ? 'status-rented' : 'status-vacant'}">${p.status}</span></div></div>
+                    <div class="detail-item"><div class="detail-label">地址</div><div class="detail-value">${p.address}</div></div>
+                    <div class="detail-item"><div class="detail-label">面积</div><div class="detail-value">${p.area ? p.area + '㎡' : '-'}</div></div>
+                    <div class="detail-item"><div class="detail-label">类型</div><div class="detail-value">${p.property_type || '-'}</div></div>
+                    <div class="detail-item"><div class="detail-label">装修</div><div class="detail-value">${p.decoration || '-'}</div></div>
+                    <div class="detail-item"><div class="detail-label">指导租金</div><div class="detail-value">${p.rent_guide ? '¥' + p.rent_guide.toLocaleString() : '-'}</div></div>
+                    <div class="detail-item"><div class="detail-label">月物业费</div><div class="detail-value">${p.property_fee ? '¥' + p.property_fee.toLocaleString() : '-'}</div></div>
+                    <div class="detail-item"><div class="detail-label">购买日期</div><div class="detail-value">${p.purchase_date || '-'}</div></div>
+                    <div class="detail-item"><div class="detail-label">购买价格</div><div class="detail-value">${p.purchase_price ? '¥' + p.purchase_price.toLocaleString() : '-'}</div></div>
+                    <div class="detail-item"><div class="detail-label">贷款金额</div><div class="detail-value">${p.loan_amount ? '¥' + p.loan_amount.toLocaleString() : '-'}</div></div>
+                    <div class="detail-item"><div class="detail-label">贷款利率</div><div class="detail-value">${p.loan_rate ? (p.loan_rate * 100).toFixed(2) + '%' : '-'}</div></div>
+                </div>
+                ${p.furniture ? `<div style="margin-top: 16px;"><div class="detail-label">家具家电</div><div style="margin-top: 8px;">${p.furniture.split(',').map(f => `<span class="tag">${f.trim()}</span>`).join('')}</div></div>` : ''}
+                ${p.remark ? `<div style="margin-top: 16px;"><div class="detail-label">备注</div><div class="detail-value" style="white-space: pre-wrap;">${p.remark}</div></div>` : ''}
+
+                ${analysis && !analysis.error ? `
+                    <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--gray-200);">
+                        <h4 style="margin-bottom: 16px;">收益分析</h4>
+                        <div class="detail-grid">
+                            <div class="detail-item"><div class="detail-label">月租金</div><div class="detail-value" style="color: var(--success);">¥${analysis.income?.monthly_rent?.toLocaleString() || 0}</div></div>
+                            <div class="detail-item"><div class="detail-label">年租金</div><div class="detail-value">¥${analysis.income?.annual_rent?.toLocaleString() || 0}</div></div>
+                            <div class="detail-item"><div class="detail-label">年还贷</div><div class="detail-value">¥${analysis.costs?.loan_cost?.toLocaleString() || 0}</div></div>
+                            <div class="detail-item"><div class="detail-label">年物业费</div><div class="detail-value">¥${analysis.costs?.property_fee?.toLocaleString() || 0}</div></div>
+                            <div class="detail-item"><div class="detail-label">机会成本</div><div class="detail-value">¥${analysis.costs?.opportunity_cost?.toLocaleString() || 0}</div></div>
+                            <div class="detail-item"><div class="detail-label">年度利润</div><div class="detail-value" style="color: ${(analysis.profit || 0) >= 0 ? 'var(--success)' : 'var(--danger)'}; font-weight: 700;">¥${(analysis.profit || 0).toLocaleString()}</div></div>
+                        </div>
+                    </div>
+                ` : ''}
+
+                <div class="form-actions">
+                    <button class="btn btn-secondary" onclick="closeModal()">关闭</button>
+                    <button class="btn btn-primary" onclick="closeModal(); editProperty(${id});">编辑</button>
+                </div>
+            `);
+        }
+
+        async function editProperty(id) {
+            const p = await api(`/properties/${id}`);
+            if (p.error) return alert(p.error);
+
+            showModal('编辑房产', `
+                <form onsubmit="saveProperty(event, ${id})">
+                    <div class="form-row">
+                        <div class="form-group"><label>名称 *</label><input name="name" value="${p.name}" required></div>
+                        <div class="form-group"><label>地址 *</label><input name="address" value="${p.address}" required></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>面积 (㎡)</label><input name="area" type="number" value="${p.area || ''}"></div>
+                        <div class="form-group"><label>类型</label>
+                            <select name="property_type">
+                                <option value="">请选择</option>
+                                <option value="住宅" ${p.property_type === '住宅' ? 'selected' : ''}>住宅</option>
+                                <option value="商铺" ${p.property_type === '商铺' ? 'selected' : ''}>商铺</option>
+                                <option value="公寓" ${p.property_type === '公寓' ? 'selected' : ''}>公寓</option>
+                                <option value="别墅" ${p.property_type === '别墅' ? 'selected' : ''}>别墅</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group"><label>装修</label>
+                        <select name="decoration">
+                            <option value="">请选择</option>
+                            <option value="毛坯" ${p.decoration === '毛坯' ? 'selected' : ''}>毛坯</option>
+                            <option value="简装" ${p.decoration === '简装' ? 'selected' : ''}>简装</option>
+                            <option value="精装" ${p.decoration === '精装' ? 'selected' : ''}>精装</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>家具家电</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            ${['床', '空调', '冰箱', '洗衣机', '电视', '沙发', '热水器', '油烟机'].map(f => `
+                                <label style="display: flex; align-items: center; gap: 4px; padding: 6px 12px; background: var(--gray-100); border-radius: 6px; cursor: pointer;">
+                                    <input type="checkbox" name="furniture" value="${f}" ${p.furniture && p.furniture.includes(f) ? 'checked' : ''}> ${f}
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>指导租金</label><input name="rent_guide" type="number" step="0.01" value="${p.rent_guide || ''}"></div>
+                        <div class="form-group"><label>月物业费</label><input name="property_fee" type="number" step="0.01" value="${p.property_fee || ''}"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>购买日期</label><input name="purchase_date" type="date" value="${p.purchase_date || ''}"></div>
+                        <div class="form-group"><label>购买价格</label><input name="purchase_price" type="number" step="0.01" value="${p.purchase_price || ''}"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>贷款金额</label><input name="loan_amount" type="number" step="0.01" value="${p.loan_amount || ''}"></div>
+                        <div class="form-group"><label>贷款利率</label><input name="loan_rate" type="number" step="0.0001" value="${p.loan_rate || ''}"></div>
+                    </div>
+                    <div class="form-group"><label>备注</label><textarea name="remark" rows="3">${p.remark || ''}</textarea></div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                        <button type="submit" class="btn btn-primary">保存</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        async function saveProperty(e, id) {
+            e.preventDefault();
+            const form = e.target;
+            const furnitureEls = form.querySelectorAll('input[name="furniture"]:checked');
+            const furniture = Array.from(furnitureEls).map(el => el.value).join(',');
+
+            const data = {
+                name: form.name.value,
+                address: form.address.value,
+                area: form.area.value ? parseFloat(form.area.value) : null,
+                property_type: form.property_type.value || null,
+                decoration: form.decoration.value || null,
+                furniture: furniture || null,
+                rent_guide: form.rent_guide.value ? parseFloat(form.rent_guide.value) : null,
+                property_fee: form.property_fee.value ? parseFloat(form.property_fee.value) : null,
+                purchase_date: form.purchase_date.value || null,
+                purchase_price: form.purchase_price.value ? parseFloat(form.purchase_price.value) : null,
+                loan_amount: form.loan_amount.value ? parseFloat(form.loan_amount.value) : null,
+                loan_rate: form.loan_rate.value ? parseFloat(form.loan_rate.value) : null,
+                remark: form.remark.value,
+                images: []
+            };
+
+            const result = await api(`/properties/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (result.error) return alert(result.error);
+            closeModal();
+            loadProperties();
+        }
+
+        async function deleteProperty(id) {
+            if (!confirm('确定要删除吗？')) return;
+            const result = await api(`/properties/${id}`, { method: 'DELETE' });
+            if (result.error) return alert(result.error);
+            loadProperties();
+        }
+
+        async function loadLeases() {
+            const [leases, properties, tenants] = await Promise.all([
+                api('/leases'),
+                api('/properties'),
+                api('/tenants')
+            ]);
+
+            const propMap = {};
+            (properties || []).forEach(p => propMap[p.id] = p.name);
+            const tenantMap = {};
+            (tenants || []).forEach(t => tenantMap[t.id] = t.name);
+
+            document.getElementById('content').innerHTML = `
+                <div class="filter-bar">
+                    <button class="btn btn-primary" onclick="showLeaseModal()">+ 创建租约</button>
+                </div>
+                <div class="card">
+                    ${(leases || []).length > 0 ? `
+                        <table>
+                            <thead><tr><th>租约名称</th><th>房产</th><th>租客</th><th>租金</th><th>租期</th><th>状态</th><th>操作</th></tr></thead>
+                            <tbody>
+                                ${leases.map(l => `
+                                    <tr>
+                                        <td>${l.name || '租约 #' + l.id}</td>
+                                        <td>${propMap[l.property_id] || '-'}</td>
+                                        <td>${tenantMap[l.tenant_id] || '待分配'}</td>
+                                        <td>¥${l.rent_amount}/月</td>
+                                        <td>${l.start_date} ~ ${l.end_date}</td>
+                                        <td><span class="status-badge ${l.status === 'active' ? 'status-active' : 'status-ended'}">${l.status === 'active' ? '进行中' : '已结束'}</span></td>
+                                        <td class="actions">
+                                            <button class="btn btn-secondary btn-sm" onclick="viewLease(${l.id})">查看</button>
+                                            ${l.status === 'active' ? `<button class="btn btn-danger btn-sm" onclick="endLease(${l.id})">结束</button>` : ''}
+                                            <button class="btn btn-danger btn-sm" onclick="deleteLease(${l.id})">删除</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    ` : '<div class="empty">暂无租约</div>'}
+                </div>
+            `;
+        }
+
+        async function showLeaseModal() {
+            const [properties, tenants] = await Promise.all([api('/properties'), api('/tenants')]);
+            const vacantProperties = (properties || []).filter(p => p.status === '空置');
+
+            showModal('创建租约', `
+                <form onsubmit="addLease(event)">
+                    <div class="form-group"><label>租约名称</label><input name="name" placeholder="如：2024年租约"></div>
+                    <div class="form-group"><label>选择房产 *</label>
+                        <select name="property_id" required onchange="onPropertySelect(this.value)">
+                            <option value="">请选择房产</option>
+                            ${vacantProperties.map(p => `<option value="${p.id}">${p.name} (${p.address})</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group"><label>选择租客</label>
+                        <select name="tenant_id">
+                            <option value="">请选择租客</option>
+                            ${(tenants || []).map(t => `<option value="${t.id}">${t.name} (${t.phone})</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>月租金 *</label><input name="rent_amount" type="number" step="0.01" required></div>
+                        <div class="form-group"><label>租金日</label><input name="rent_day" type="number" value="1" min="1" max="28"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>押金</label><input name="deposit" type="number" step="0.01"></div>
+                        <div class="form-group"><label>租期开始 *</label><input name="start_date" type="date" required></div>
+                    </div>
+                    <div class="form-group"><label>租期结束 *</label><input name="end_date" type="date" required></div>
+                    <div class="form-group"><label>备注</label><textarea name="remark" rows="2"></textarea></div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                        <button type="submit" class="btn btn-primary">创建</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        async function onPropertySelect(propertyId) {
+            if (!propertyId) return;
+            const p = await api(`/properties/${propertyId}`);
+            if (p && p.rent_guide) {
+                const rentInput = document.querySelector('input[name="rent_amount"]');
+                if (!rentInput.value) rentInput.value = p.rent_guide;
+            }
+        }
+
+        async function addLease(e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = {
+                name: form.name.value,
+                property_id: parseInt(form.property_id.value),
+                tenant_id: form.tenant_id.value ? parseInt(form.tenant_id.value) : null,
+                rent_amount: parseFloat(form.rent_amount.value),
+                rent_day: parseInt(form.rent_day.value) || 1,
+                deposit: form.deposit.value ? parseFloat(form.deposit.value) : 0,
+                start_date: form.start_date.value,
+                end_date: form.end_date.value,
+                remark: form.remark.value
+            };
+
+            const result = await api('/leases', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (result.error) return alert(result.error);
+            closeModal();
+            loadLeases();
+        }
+
+        async function viewLease(id) {
+            const l = await api(`/leases/${id}`);
+            if (l.error) return alert(l.error);
+
+            showModal('租约详情', `
+                <div class="detail-grid">
+                    <div class="detail-item"><div class="detail-label">租约名称</div><div class="detail-value">${l.name || '租约 #' + l.id}</div></div>
+                    <div class="detail-item"><div class="detail-label">状态</div><div class="detail-value"><span class="status-badge ${l.status === 'active' ? 'status-active' : 'status-ended'}">${l.status === 'active' ? '进行中' : '已结束'}</span></div></div>
+                    <div class="detail-item"><div class="detail-label">房产</div><div class="detail-value">${l.property_name}</div></div>
+                    <div class="detail-item"><div class="detail-label">租客</div><div class="detail-value">${l.tenant_name || '待分配'}</div></div>
+                    <div class="detail-item"><div class="detail-label">月租金</div><div class="detail-value" style="color: var(--success);">¥${l.rent_amount}</div></div>
+                    <div class="detail-item"><div class="detail-label">租金日</div><div class="detail-value">每月${l.rent_day}日</div></div>
+                    <div class="detail-item"><div class="detail-label">押金</div><div class="detail-value">¥${l.deposit || 0}</div></div>
+                    <div class="detail-item"><div class="detail-label">租期</div><div class="detail-value">${l.start_date} ~ ${l.end_date}</div></div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-secondary" onclick="closeModal()">关闭</button>
+                </div>
+            `);
+        }
+
+        async function endLease(id) {
+            if (!confirm('确定要结束这个租约吗？')) return;
+            const result = await api(`/leases/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'ended' })
+            });
+            if (result.error) return alert(result.error);
+            loadLeases();
+        }
+
+        async function deleteLease(id) {
+            if (!confirm('确定要删除这个租约吗？')) return;
+            const result = await api(`/leases/${id}`, { method: 'DELETE' });
+            if (result.error) return alert(result.error);
+            loadLeases();
+        }
+
+        async function loadTenants() {
+            const tenants = await api('/tenants');
+            document.getElementById('content').innerHTML = `
+                <div class="filter-bar">
+                    <button class="btn btn-primary" onclick="showTenantModal()">+ 添加租客</button>
+                </div>
+                <div class="card">
+                    ${(tenants || []).length > 0 ? `
+                        <table>
+                            <thead><tr><th>姓名</th><th>电话</th><th>身份证</th><th>紧急联系人</th><th>操作</th></tr></thead>
+                            <tbody>
+                                ${tenants.map(t => `
+                                    <tr>
+                                        <td>${t.name}</td>
+                                        <td>${t.phone}</td>
+                                        <td>${t.id_card || '-'}</td>
+                                        <td>${t.emergency_contact ? t.emergency_contact + ' ' + t.emergency_phone : '-'}</td>
+                                        <td class="actions">
+                                            <button class="btn btn-secondary btn-sm" onclick="editTenant(${t.id})">编辑</button>
+                                            <button class="btn btn-danger btn-sm" onclick="deleteTenant(${t.id})">删除</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    ` : '<div class="empty">暂无租客</div>'}
+                </div>
+            `;
+        }
+
+        async function showTenantModal() {
+            showModal('添加租客', `
+                <form onsubmit="addTenant(event)">
+                    <div class="form-row">
+                        <div class="form-group"><label>姓名 *</label><input name="name" required></div>
+                        <div class="form-group"><label>电话 *</label><input name="phone" required></div>
+                    </div>
+                    <div class="form-group"><label>身份证</label><input name="id_card"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>紧急联系人</label><input name="emergency_contact"></div>
+                        <div class="form-group"><label>紧急联系电话</label><input name="emergency_phone"></div>
+                    </div>
+                    <div class="form-group"><label>备注</label><textarea name="remark" rows="2"></textarea></div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                        <button type="submit" class="btn btn-primary">添加</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        async function addTenant(e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = {
+                name: form.name.value,
+                phone: form.phone.value,
+                id_card: form.id_card.value,
+                emergency_contact: form.emergency_contact.value,
+                emergency_phone: form.emergency_phone.value,
+                remark: form.remark.value
+            };
+
+            const result = await api('/tenants', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (result.error) return alert(result.error);
+            closeModal();
+            loadTenants();
+        }
+
+        async function editTenant(id) {
+            const t = await api(`/tenants/${id}`);
+            if (t.error) return alert(t.error);
+
+            showModal('编辑租客', `
+                <form onsubmit="saveTenant(event, ${id})">
+                    <div class="form-row">
+                        <div class="form-group"><label>姓名 *</label><input name="name" value="${t.name}" required></div>
+                        <div class="form-group"><label>电话 *</label><input name="phone" value="${t.phone}" required></div>
+                    </div>
+                    <div class="form-group"><label>身份证</label><input name="id_card" value="${t.id_card || ''}"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>紧急联系人</label><input name="emergency_contact" value="${t.emergency_contact || ''}"></div>
+                        <div class="form-group"><label>紧急联系电话</label><input name="emergency_phone" value="${t.emergency_phone || ''}"></div>
+                    </div>
+                    <div class="form-group"><label>备注</label><textarea name="remark" rows="2">${t.remark || ''}</textarea></div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                        <button type="submit" class="btn btn-primary">保存</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        async function saveTenant(e, id) {
+            e.preventDefault();
+            const form = e.target;
+            const data = {
+                name: form.name.value,
+                phone: form.phone.value,
+                id_card: form.id_card.value,
+                emergency_contact: form.emergency_contact.value,
+                emergency_phone: form.emergency_phone.value,
+                remark: form.remark.value
+            };
+
+            const result = await api(`/tenants/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (result.error) return alert(result.error);
+            closeModal();
+            loadTenants();
+        }
+
+        async function deleteTenant(id) {
+            if (!confirm('确定要删除吗？')) return;
+            const result = await api(`/tenants/${id}`, { method: 'DELETE' });
+            if (result.error) return alert(result.error);
+            loadTenants();
+        }
+
+        async function loadPayments() {
+            const [payments, properties] = await Promise.all([api('/payments'), api('/properties')]);
+            const propMap = {};
+            (properties || []).forEach(p => propMap[p.id] = p.name);
+
+            document.getElementById('content').innerHTML = `
+                <div class="card">
+                    <h3 style="margin-bottom: 16px;">付款记录</h3>
+                    ${(payments || []).length > 0 ? `
+                        <table>
+                            <thead><tr><th>到期日</th><th>房产</th><th>金额</th><th>状态</th><th>实付日期</th><th>操作</th></tr></thead>
+                            <tbody>
+                                ${payments.map(p => `
+                                    <tr>
+                                        <td>${p.due_date}</td>
+                                        <td>${propMap[p.property_id] || '-'}</td>
+                                        <td>¥${p.amount.toLocaleString()}</td>
+                                        <td><span class="status-badge ${p.status === 'paid' ? 'status-paid' : 'status-pending'}">${p.status === 'paid' ? '已付' : '待付'}</span></td>
+                                        <td>${p.paid_date || '-'}</td>
+                                        <td>
+                                            ${p.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="markPaid(${p.id})">确认收款</button>` : ''}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    ` : '<div class="empty">暂无付款记录</div>'}
+                </div>
+            `;
+        }
+
+        async function markPaid(id) {
+            const result = await api(`/payments/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'paid' })
+            });
+            if (result.error) return alert(result.error);
+            loadPayments();
+        }
+
+        async function loadAnalysis() {
+            const [summary, properties] = await Promise.all([api('/analysis/summary'), api('/properties')]);
+
+            const propertiesWithAnalysis = await Promise.all(
+                (properties || []).map(async p => {
+                    const result = await api(`/analysis/property/${p.id}`);
+                    return { property: p, analysis: result };
+                })
+            );
+
+            document.getElementById('content').innerHTML = `
+                <div class="card" style="margin-bottom: 24px;">
+                    <h3 style="margin-bottom: 24px;">总体概览</h3>
+                    <div class="stats">
+                        <div class="stat-card">
+                            <div class="stat-label">房产总数</div>
+                            <div class="stat-value">${summary.total_properties}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">出租率</div>
+                            <div class="stat-value">${summary.total_properties ? ((summary.rented_count / summary.total_properties) * 100).toFixed(0) + '%' : '0%'}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">月租金收入</div>
+                            <div class="stat-value" style="color: var(--success);">¥${(summary.income?.total_monthly_rent || 0).toLocaleString()}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">年度利润</div>
+                            <div class="stat-value" style="color: ${(summary.profit || 0) >= 0 ? 'var(--success)' : 'var(--danger)'};">
+                                ¥${(summary.profit || 0).toLocaleString()}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-bottom: 16px;">各房产收益分析</h3>
+                    ${propertiesWithAnalysis.length > 0 ? `
+                        <table>
+                            <thead><tr><th>房产</th><th>状态</th><th>月租金</th><th>年租金</th><th>年成本</th><th>年度利润</th></tr></thead>
+                            <tbody>
+                                ${propertiesWithAnalysis.map(({ property: p, analysis }) => {
+                                    if (!analysis || analysis.error) return '';
+                                    const costs = analysis.costs || {};
+                                    const totalCosts = (costs.loan_cost || 0) + (costs.property_fee || 0) + (costs.opportunity_cost || 0);
+                                    return `
+                                        <tr>
+                                            <td>${p.name}</td>
+                                            <td><span class="status-badge ${p.status === '出租中' ? 'status-rented' : 'status-vacant'}">${p.status}</span></td>
+                                            <td>¥${(analysis.income?.monthly_rent || 0).toLocaleString()}</td>
+                                            <td>¥${(analysis.income?.annual_rent || 0).toLocaleString()}</td>
+                                            <td>¥${totalCosts.toLocaleString()}</td>
+                                            <td style="color: ${(analysis.profit || 0) >= 0 ? 'var(--success)' : 'var(--danger)'}; font-weight: 600;">
+                                                ¥${(analysis.profit || 0).toLocaleString()}
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    ` : '<div class="empty">暂无数据</div>'}
+                </div>
+            `;
+        }
+
+        function showModal(title, body) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalBody').innerHTML = body;
+            document.getElementById('modal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('show');
+        }
+
+        document.querySelectorAll('.nav-item').forEach(el => el.addEventListener('click', () => navigate(el.dataset.page)));
+        loadDashboard();
+    </script>
+</body>
+</html>
