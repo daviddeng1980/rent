@@ -69,3 +69,4 @@ ALTER TABLE property ADD COLUMN images TEXT DEFAULT '[]';
 | 日期 | 版本 | 说明 |
 |------|------|------|
 | 2026-03-31 | v1.0 | 需求确认，开始开发 |
+| 2026-03-31 | v1.1 | 功能开发完成，待测试 |
