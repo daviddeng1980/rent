@@ -17,18 +17,13 @@ STATUS_MAP = {
 }
 
 def generate_payments(lease):
-    """为租约生成付款计划"""
+    """为租约生成付款计划 - 根据租期开始和支付周期自动计算"""
     start = datetime.strptime(lease.start_date.strftime('%Y-%m-%d'), '%Y-%m-%d')
     end = datetime.strptime(lease.end_date.strftime('%Y-%m-%d'), '%Y-%m-%d')
     payment_cycle = lease.payment_cycle or 1  # 默认为月付
 
-    current = datetime(start.year, start.month, lease.rent_day)
-    if current < start:
-        # 计算下一个付款日
-        month = start.month + payment_cycle
-        year = start.year + (month - 1) // 12
-        month = (month - 1) % 12 + 1
-        current = datetime(year, month, lease.rent_day)
+    # 第一个付款日是租期开始日
+    current = start
 
     while current <= end:
         # 检查是否已存在
@@ -46,7 +41,8 @@ def generate_payments(lease):
         month = current.month + payment_cycle
         year = current.year + (month - 1) // 12
         month = (month - 1) % 12 + 1
-        current = datetime(year, month, lease.rent_day)
+        day = min(current.day, calendar.monthrange(year, month)[1])  # 防止日期溢出
+        current = datetime(year, month, day)
 
 @lease_bp.route('/leases', methods=['GET'])
 def get_leases():
@@ -269,10 +265,10 @@ def amend_lease(id):
         new_values['rent_amount'] = data['rent_amount']
         l.rent_amount = data['rent_amount']
 
-    if 'rent_day' in data and data['rent_day'] != l.rent_day:
-        old_values['rent_day'] = l.rent_day
-        new_values['rent_day'] = data['rent_day']
-        l.rent_day = data['rent_day']
+    if 'payment_cycle' in data and data['payment_cycle'] != l.payment_cycle:
+        old_values['payment_cycle'] = l.payment_cycle
+        new_values['payment_cycle'] = data['payment_cycle']
+        l.payment_cycle = data['payment_cycle']
 
     if 'deposit' in data and data['deposit'] != l.deposit:
         old_values['deposit'] = l.deposit
