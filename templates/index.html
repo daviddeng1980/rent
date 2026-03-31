@@ -146,10 +146,20 @@
         async function api(url, options = {}) {
             try {
                 const res = await fetch(API + url, options);
-                return await res.json();
+                const text = await res.text();
+                if (!res.ok) {
+                    console.error('API Error:', res.status, text);
+                    return { error: `请求失败 (${res.status})` };
+                }
+                try {
+                    return JSON.parse(text);
+                } catch {
+                    console.error('JSON parse error:', text);
+                    return { error: '响应格式错误' };
+                }
             } catch (e) {
-                console.error(e);
-                return { error: '请求失败' };
+                console.error('Fetch error:', e);
+                return { error: '网络请求失败' };
             }
         }
 
@@ -968,7 +978,9 @@
 
                 try {
                     const res = await fetch(API + '/upload/image', { method: 'POST', body: formData });
-                    const result = await res.json();
+                    const text = await res.text();
+                    let result;
+                    try { result = JSON.parse(text); } catch { alert('上传失败：响应格式错误'); continue; }
                     if (result.error) { alert(result.error); continue; }
                     pendingImages.push(result);
                     renderImagePreviews();
