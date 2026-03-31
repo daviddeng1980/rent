@@ -775,17 +775,51 @@
             const l = await api(`/leases/${id}`);
             if (l.error) return alert(l.error);
 
-            const statusClass = l.status === 'active' ? 'status-active' : l.status === 'pending' ? 'status-pending' : 'status-ended';
+            // 获取该租约的付款记录
+            const payments = await api(`/payments?lease_id=${id}`);
             const cycleMap = {1: '月付', 3: '季付', 6: '半年付', 12: '年付'};
+            const statusClass = l.status === 'active' ? 'status-active' : l.status === 'pending' ? 'status-pending' : 'status-ended';
+
+            // 计算每期覆盖的周期
+            const paymentCycle = l.payment_cycle || 1;
+            const startDate = new Date(l.start_date);
+
             showModal('租约详情', `
                 <div class="detail-grid">
                     <div class="detail-item"><div class="detail-label">租约名称</div><div class="detail-value">${l.name || '租约 #' + l.id}</div></div>
                     <div class="detail-item"><div class="detail-label">状态</div><div class="detail-value"><span class="status-badge ${statusClass}">${l.status_text}</span></div></div>
                     <div class="detail-item"><div class="detail-label">房产</div><div class="detail-value">${l.property_name}</div></div>
                     <div class="detail-item"><div class="detail-label">租客</div><div class="detail-value">${l.tenant_name || '待分配'}</div></div>
-                    <div class="detail-item"><div class="detail-label">每期租金</div><div class="detail-value" style="color: var(--success);">¥${l.rent_amount}/${cycleMap[l.payment_cycle] || '月'}</div></div>
+                    <div class="detail-item"><div class="detail-label">支付周期</div><div class="detail-value">${cycleMap[l.payment_cycle] || '月付'}</div></div>
+                    <div class="detail-item"><div class="detail-label">每期租金</div><div class="detail-value" style="color: var(--success);">¥${l.rent_amount}</div></div>
                     <div class="detail-item"><div class="detail-label">押金</div><div class="detail-value">¥${l.deposit || 0}</div></div>
                     <div class="detail-item"><div class="detail-label">租期</div><div class="detail-value">${l.start_date} ~ ${l.end_date}</div></div>
+                </div>
+                <div style="margin-top:16px;">
+                    <h4>付款计划</h4>
+                    ${payments && payments.length > 0 ? `
+                        <table style="font-size:13px;">
+                            <thead><tr><th>期数</th><th>到期日</th><th>覆盖周期</th><th>金额</th><th>状态</th><th>操作</th></tr></thead>
+                            <tbody>
+                                ${payments.map((p, idx) => {
+                                    const dueDate = new Date(p.due_date);
+                                    const periodStart = new Date(dueDate);
+                                    periodStart.setMonth(periodStart.getMonth() - paymentCycle);
+                                    const periodEnd = new Date(dueDate);
+                                    periodEnd.setDate(periodEnd.getDate() - 1);
+                                    const statusBadge = p.current_status === 'overdue' ? '<span class="status-badge status-overdue">逾期</span>' : p.current_status === 'paid' ? '<span class="status-badge status-paid">已缴纳</span>' : '<span class="status-badge status-pending">未到期</span>';
+                                    return `<tr ${p.current_status === 'overdue' ? 'style="background:#fef2f2;"' : ''}>
+                                        <td>第${idx + 1}期</td>
+                                        <td>${p.due_date}</td>
+                                        <td>${formatDate(periodStart)} ~ ${formatDate(periodEnd)}</td>
+                                        <td style="color:var(--success);">¥${p.amount}</td>
+                                        <td>${statusBadge}</td>
+                                        <td>${p.current_status !== 'paid' ? `<button class="btn btn-success btn-sm" onclick="markPaid(${p.id});viewLease(${id});">确认收款</button>` : '-'}</td>
+                                    </tr>`;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    ` : '<div style="color:var(--gray-500);font-size:13px;">暂无付款记录${l.status === "pending" ? "（租约未生效）" : ""}</div>'}
                 </div>
                 ${l.termination_reason ? `<div class="detail-grid" style="margin-top:16px;"><div class="detail-item"><div class="detail-label">终止原因</div><div class="detail-value">${l.termination_reason}</div></div><div class="detail-item"><div class="detail-label">终止日期</div><div class="detail-value">${l.termination_date}</div></div></div>` : ''}
                 <div style="margin-top:16px;">
@@ -1020,6 +1054,12 @@
             `;
         }
 
+
+        function formatDate(date) {
+            const d = new Date(date);
+            return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+        }
+
         function validatePhone(value) {
             if (!value) return '手机号不能为空';
             if (!/^1[3-9]\d{9}$/.test(value)) return '手机号格式错误，应为11位数字（以1开头）';
@@ -1182,8 +1222,9 @@
         }
 
         async function loadPayments() {
-            const [payments, properties, tenants] = await Promise.all([
+            const [payments, leases, properties, tenants] = await Promise.all([
                 api('/payments'),
+                api('/leases'),
                 api('/properties'),
                 api('/tenants')
             ]);
@@ -1191,9 +1232,21 @@
             (properties || []).forEach(p => propMap[p.id] = p.name);
             const tenantMap = {};
             (tenants || []).forEach(t => tenantMap[t.id] = t.name);
+            const leaseMap = {};
+            (leases || []).forEach(l => leaseMap[l.id] = l);
+
+            // 按租约分组统计
+            const leasePayments = {};
+            const cycleMap = {1: '月付', 3: '季付', 6: '半年付', 12: '年付'};
+            (payments || []).forEach(p => {
+                if (!leasePayments[p.lease_id]) {
+                    leasePayments[p.lease_id] = [];
+                }
+                leasePayments[p.lease_id].push(p);
+            });
 
             // 状态统计
-            const stats = { pending: 0, overdue: 0, paid: 0, cancelled: 0 };
+            const stats = { pending: 0, overdue: 0, paid: 0 };
             (payments || []).forEach(p => {
                 const s = p.current_status;
                 if (stats[s] !== undefined) stats[s]++;
@@ -1214,32 +1267,62 @@
                         <span class="stat-item stat-overdue">逾期: ${stats.overdue}</span>
                         <span class="stat-item stat-paid">已缴纳: ${stats.paid}</span>
                     </div>
-                    ${(payments || []).length > 0 ? `
-                        <table>
-                            <thead><tr><th>到期日</th><th>房产</th><th>租客</th><th>金额</th><th>状态</th><th>实付日期</th><th>操作</th></tr></thead>
-                            <tbody>
-                                ${payments.map(p => {
-                                    const statusClass = p.current_status === 'overdue' ? 'status-overdue' : p.current_status === 'paid' ? 'status-paid' : p.current_status === 'pending' ? 'status-pending' : 'status-cancelled';
-                                    const isOverdue = p.current_status === 'overdue';
-                                    return `
-                                        <tr ${isOverdue ? 'style="background:#fef2f2;"' : ''}>
-                                            <td>${p.due_date}</td>
-                                            <td>${propMap[p.property_id] || '-'}</td>
-                                            <td>${tenantMap[p.lease_id] || '-'}</td>
-                                            <td style="color: var(--success); font-weight: 600;">¥${p.amount.toLocaleString()}</td>
-                                            <td><span class="status-badge ${statusClass}">${p.status_text}</span></td>
-                                            <td>${p.paid_date || '-'}</td>
-                                            <td>
-                                                ${p.current_status === 'pending' || p.current_status === 'overdue' ? `<button class="btn btn-success btn-sm" onclick="markPaid(${p.id})">确认收款</button>` : ''}
-                                            </td>
-                                        </tr>
-                                    `;
-                                }).join('')}
-                            </tbody>
-                        </table>
+                    ${Object.keys(leasePayments).length > 0 ? `
+                        ${Object.entries(leasePayments).map(([leaseId, pmts]) => {
+                            const lease = leaseMap[leaseId] || {};
+                            const hasOverdue = pmts.some(p => p.current_status === 'overdue');
+                            const allPaid = pmts.every(p => p.current_status === 'paid');
+                            const leaseStatus = hasOverdue ? '<span class="status-badge status-overdue">有逾期</span>' : allPaid ? '<span class="status-badge status-paid">已结清</span>' : '<span class="status-badge status-pending">进行中</span>';
+                            return `
+                                <div class="lease-payment-group" style="margin-bottom:24px;border:1px solid var(--gray-200);border-radius:8px;overflow:hidden;">
+                                    <div class="lease-payment-header" style="background:var(--gray-50);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleLeasePayments(${leaseId})">
+                                        <div>
+                                            <span style="font-weight:600;">${lease.name || '租约 #' + leaseId}</span>
+                                            <span style="margin-left:8px;color:var(--gray-500);">${propMap[lease.property_id] || ''}</span>
+                                            <span style="margin-left:8px;">${cycleMap[lease.payment_cycle] || '月付'}</span>
+                                        </div>
+                                        <div style="display:flex;align-items:center;gap:12px;">
+                                            ${leaseStatus}
+                                            <span style="color:var(--gray-500);font-size:12px;">▼</span>
+                                        </div>
+                                    </div>
+                                    <div class="lease-payment-items" id="lease-payments-${leaseId}" style="display:none;">
+                                        <table style="font-size:13px;">
+                                            <thead><tr><th>期数</th><th>到期日</th><th>覆盖周期</th><th>金额</th><th>状态</th><th>实付日期</th><th>操作</th></tr></thead>
+                                            <tbody>
+                                                ${pmts.map((p, idx) => {
+                                                    const paymentCycle = lease.payment_cycle || 1;
+                                                    const dueDate = new Date(p.due_date);
+                                                    const periodStart = new Date(dueDate);
+                                                    periodStart.setMonth(periodStart.getMonth() - paymentCycle);
+                                                    periodStart.setDate(periodStart.getDate() + 1);
+                                                    const periodEnd = new Date(dueDate);
+                                                    periodEnd.setDate(periodEnd.getDate() - 1);
+                                                    const statusBadge = p.current_status === 'overdue' ? '<span class="status-badge status-overdue">逾期</span>' : p.current_status === 'paid' ? '<span class="status-badge status-paid">已缴纳</span>' : '<span class="status-badge status-pending">未到期</span>';
+                                                    return `<tr ${p.current_status === 'overdue' ? 'style="background:#fef2f2;"' : ''}>
+                                                        <td>第${idx + 1}期</td>
+                                                        <td>${p.due_date}</td>
+                                                        <td>${formatDate(periodStart)} ~ ${formatDate(periodEnd)}</td>
+                                                        <td style="color:var(--success);">¥${p.amount.toLocaleString()}</td>
+                                                        <td>${statusBadge}</td>
+                                                        <td>${p.paid_date || '-'}</td>
+                                                        <td>${p.current_status !== 'paid' ? `<button class="btn btn-success btn-sm" onclick="markPaid(${p.id});loadPayments();">确认收款</button>` : '-'}</td>
+                                                    </tr>`;
+                                                }).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
                     ` : '<div class="empty">暂无付款记录</div>'}
                 </div>
             `;
+        }
+
+        function toggleLeasePayments(leaseId) {
+            const el = document.getElementById(`lease-payments-${leaseId}`);
+            el.style.display = el.style.display === 'none' ? 'block' : 'none';
         }
 
         async function loadPaymentsFiltered() {
@@ -1247,8 +1330,9 @@
             let url = '/payments';
             if (statusFilter) url += `?status=${statusFilter}`;
 
-            const [payments, properties, tenants] = await Promise.all([
+            const [payments, leases, properties, tenants] = await Promise.all([
                 api(url),
+                api('/leases'),
                 api('/properties'),
                 api('/tenants')
             ]);
@@ -1256,6 +1340,18 @@
             (properties || []).forEach(p => propMap[p.id] = p.name);
             const tenantMap = {};
             (tenants || []).forEach(t => tenantMap[t.id] = t.name);
+            const leaseMap = {};
+            (leases || []).forEach(l => leaseMap[l.id] = l);
+
+            // 按租约分组统计
+            const leasePayments = {};
+            const cycleMap = {1: '月付', 3: '季付', 6: '半年付', 12: '年付'};
+            (payments || []).forEach(p => {
+                if (!leasePayments[p.lease_id]) {
+                    leasePayments[p.lease_id] = [];
+                }
+                leasePayments[p.lease_id].push(p);
+            });
 
             const stats = { pending: 0, overdue: 0, paid: 0 };
             (payments || []).forEach(p => {
@@ -1269,29 +1365,54 @@
                     <span class="stat-item stat-overdue">逾期: ${stats.overdue}</span>
                     <span class="stat-item stat-paid">已缴纳: ${stats.paid}</span>
                 </div>
-                ${(payments || []).length > 0 ? `
-                    <table>
-                        <thead><tr><th>到期日</th><th>房产</th><th>租客</th><th>金额</th><th>状态</th><th>实付日期</th><th>操作</th></tr></thead>
-                        <tbody>
-                            ${payments.map(p => {
-                                const statusClass = p.current_status === 'overdue' ? 'status-overdue' : p.current_status === 'paid' ? 'status-paid' : p.current_status === 'pending' ? 'status-pending' : 'status-cancelled';
-                                const isOverdue = p.current_status === 'overdue';
-                                return `
-                                    <tr ${isOverdue ? 'style="background:#fef2f2;"' : ''}>
-                                        <td>${p.due_date}</td>
-                                        <td>${propMap[p.property_id] || '-'}</td>
-                                        <td>${tenantMap[p.lease_id] || '-'}</td>
-                                        <td style="color: var(--success); font-weight: 600;">¥${p.amount.toLocaleString()}</td>
-                                        <td><span class="status-badge ${statusClass}">${p.status_text}</span></td>
-                                        <td>${p.paid_date || '-'}</td>
-                                        <td>
-                                            ${p.current_status === 'pending' || p.current_status === 'overdue' ? `<button class="btn btn-success btn-sm" onclick="markPaid(${p.id})">确认收款</button>` : ''}
-                                        </td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
+                ${Object.keys(leasePayments).length > 0 ? `
+                    ${Object.entries(leasePayments).map(([leaseId, pmts]) => {
+                        const lease = leaseMap[leaseId] || {};
+                        const hasOverdue = pmts.some(p => p.current_status === 'overdue');
+                        const allPaid = pmts.every(p => p.current_status === 'paid');
+                        const leaseStatus = hasOverdue ? '<span class="status-badge status-overdue">有逾期</span>' : allPaid ? '<span class="status-badge status-paid">已结清</span>' : '<span class="status-badge status-pending">进行中</span>';
+                        return `
+                            <div class="lease-payment-group" style="margin-bottom:24px;border:1px solid var(--gray-200);border-radius:8px;overflow:hidden;">
+                                <div class="lease-payment-header" style="background:var(--gray-50);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleLeasePayments(${leaseId})">
+                                    <div>
+                                        <span style="font-weight:600;">${lease.name || '租约 #' + leaseId}</span>
+                                        <span style="margin-left:8px;color:var(--gray-500);">${propMap[lease.property_id] || ''}</span>
+                                        <span style="margin-left:8px;">${cycleMap[lease.payment_cycle] || '月付'}</span>
+                                    </div>
+                                    <div style="display:flex;align-items:center;gap:12px;">
+                                        ${leaseStatus}
+                                        <span style="color:var(--gray-500);font-size:12px;">▼</span>
+                                    </div>
+                                </div>
+                                <div class="lease-payment-items" id="lease-payments-${leaseId}" style="display:none;">
+                                    <table style="font-size:13px;">
+                                        <thead><tr><th>期数</th><th>到期日</th><th>覆盖周期</th><th>金额</th><th>状态</th><th>实付日期</th><th>操作</th></tr></thead>
+                                        <tbody>
+                                            ${pmts.map((p, idx) => {
+                                                const paymentCycle = lease.payment_cycle || 1;
+                                                const dueDate = new Date(p.due_date);
+                                                const periodStart = new Date(dueDate);
+                                                periodStart.setMonth(periodStart.getMonth() - paymentCycle);
+                                                periodStart.setDate(periodStart.getDate() + 1);
+                                                const periodEnd = new Date(dueDate);
+                                                periodEnd.setDate(periodEnd.getDate() - 1);
+                                                const statusBadge = p.current_status === 'overdue' ? '<span class="status-badge status-overdue">逾期</span>' : p.current_status === 'paid' ? '<span class="status-badge status-paid">已缴纳</span>' : '<span class="status-badge status-pending">未到期</span>';
+                                                return `<tr ${p.current_status === 'overdue' ? 'style="background:#fef2f2;"' : ''}>
+                                                    <td>第${idx + 1}期</td>
+                                                    <td>${p.due_date}</td>
+                                                    <td>${formatDate(periodStart)} ~ ${formatDate(periodEnd)}</td>
+                                                    <td style="color:var(--success);">¥${p.amount.toLocaleString()}</td>
+                                                    <td>${statusBadge}</td>
+                                                    <td>${p.paid_date || '-'}</td>
+                                                    <td>${p.current_status !== 'paid' ? `<button class="btn btn-success btn-sm" onclick="markPaid(${p.id});loadPaymentsFiltered();">确认收款</button>` : '-'}</td>
+                                                </tr>`;
+                                            }).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
                 ` : '<div class="empty">暂无付款记录</div>'}
             `;
         }
