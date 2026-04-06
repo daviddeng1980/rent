@@ -112,8 +112,11 @@ def delete_property(id):
     p = Property.query.get(id)
     if not p:
         return jsonify({"error": "Property not found"}), 404
-    if p.leases:
-        return jsonify({"error": "Cannot delete property with active lease"}), 400
+    # 只检查是否有活跃租约
+    from models import Lease
+    active_lease = Lease.query.filter_by(property_id=id, status='active').first()
+    if active_lease:
+        return jsonify({"error": "无法删除：有活跃的租约"}), 400
     db.session.delete(p)
     db.session.commit()
     return jsonify({"message": "Property deleted"}), 200
