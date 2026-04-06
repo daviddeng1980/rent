@@ -4,7 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>租金管理系统</title>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script>
+        // 内联SVG图标库
+        const icons = {
+            "alert-circle": '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
+            "bar-chart-2": '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+            "bar-chart-3": '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="3" y1="20" x2="3" y2="18"/>',
+            "bell": '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+            "building": '<rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/>',
+            "building-2": '<rect x="6" y="2" width="12" height="20" rx="2" ry="2"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M12 18h.01"/><path d="M4 6h.01"/><path d="M4 10h.01"/><path d="M4 14h.01"/><path d="M4 18h.01"/>',
+            "check": '<polyline points="20 6 9 17 4 12"/>',
+            "check-circle": '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+            "chevron-down": '<polyline points="6 9 12 15 18 9"/>',
+            "clock": '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+            "credit-card": '<rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>',
+            "door-open": '<path d="M13 4h3a2 2 0 0 1 2 2v14"/><path d="M2 20h3"/><path d="M13 20h9"/><path d="M10 12v.01"/><path d="M13 4.562v16.157a1 1 0 0 1-1.242.97L5 20V5.562a2 2 0 0 1 1.515-1.94l4-1A2 2 0 0 1 13 4.561Z"/>',
+            "edit": '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>',
+            "eye": '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+            "file": '<path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/>',
+            "file-plus": '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>',
+            "file-text": '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>',
+            "home": '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+            "info": '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
+            "layout-dashboard": '<rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/>',
+            "map-pin": '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
+            "menu": '<line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>',
+            "pencil": '<path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>',
+            "percent": '<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
+            "phone": '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
+            "pie-chart": '<path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>',
+            "plus-circle": '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>',
+            "receipt": '<polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>',
+            "refresh-cw": '<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>',
+            "rotate-ccw": '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
+            "save": '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>',
+            "trash-2": '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>',
+            "trending-up": '<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>',
+            "upload": '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+            "user-plus": '<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>',
+            "users": '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+            "wallet": '<rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>',
+            "x-circle": '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>',
+            "x": '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+            "x-circle": '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'
+        };
+
+        // 创建SVG图标函数
+        function icon(name, size = 16) {
+            if (!icons[name]) return '';
+            return '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + icons[name] + '</svg>';
+        }
+    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
@@ -134,6 +184,8 @@
         .btn-danger:hover { background: #dc2626; }
         .btn-secondary { background: var(--gray-100); color: var(--gray-700); }
         .btn-secondary:hover { background: var(--gray-200); }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-warning:hover { background: #d97706; }
         .btn-sm { padding: 6px 12px; font-size: 12px; }
         .btn-icon { width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); background: var(--gray-100); color: var(--gray-600); border: none; cursor: pointer; transition: var(--transition); }
         .btn-icon:hover { background: var(--primary); color: white; }
@@ -343,28 +395,28 @@
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="logo">
-                <div class="logo-icon"><i data-lucide="building-2"></i></div>
+                <div class="logo-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg></div>
                 <span>租金管理</span>
             </div>
         </div>
         <div class="nav-section">概览</div>
-        <div class="nav-item active" data-page="dashboard"><i data-lucide="layout-dashboard"></i>仪表盘</div>
+        <div class="nav-item active" data-page="dashboard"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>仪表盘</div>
         <div class="nav-section">核心管理</div>
-        <div class="nav-item" data-page="properties"><i data-lucide="building-2"></i>房产管理</div>
-        <div class="nav-item" data-page="leases"><i data-lucide="file-text"></i>租约管理</div>
-        <div class="nav-item" data-page="tenants"><i data-lucide="users"></i>租客管理</div>
-        <div class="nav-item" data-page="payments"><i data-lucide="credit-card"></i>付款管理</div>
+        <div class="nav-item" data-page="properties"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>房产管理</div>
+        <div class="nav-item" data-page="leases"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>租约管理</div>
+        <div class="nav-item" data-page="tenants"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>租客管理</div>
+        <div class="nav-item" data-page="payments"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>付款管理</div>
         <div class="nav-section">分析</div>
-        <div class="nav-item" data-page="analysis"><i data-lucide="bar-chart-3"></i>利润分析</div>
+        <div class="nav-item" data-page="analysis"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="3" y1="20" x2="3" y2="18"/></svg>利润分析</div>
     </div>
 
     <div class="main">
         <div class="header">
             <div style="display: flex; align-items: center; gap: 16px;">
-                <button class="mobile-menu-btn" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
+                <button class="mobile-menu-btn" onclick="toggleSidebar()"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
                 <h1 id="pageTitle">仪表盘</h1>
             </div>
-            <div class="header-time"><i data-lucide="clock"></i><span id="currentTime"></span></div>
+            <div class="header-time"></svg><span id="currentTime"></span></div>
         </div>
         <div class="content" id="content"></div>
     </div>
@@ -385,7 +437,17 @@
     </div>
 
     <script>
-        const API = window.location.origin;
+        // API路径跟随应用部署路径：如果应用在 /rent/ 下，API请求也发送到 /rent/
+        // 例如：页面在 http://domain.com/rent/ 或 http://domain.com/rent/properties
+        // 则API请求发送到 http://domain.com/rent
+        const pathname = window.location.pathname;
+        // 分割路径，取前两段（去掉最后一段，因为可能是 index.html 或路由）
+        const segments = pathname.split('/').filter(s => s);
+        if (segments.length > 1) {
+            segments.pop(); // 移除最后一段
+        }
+        const appPath = '/' + segments.join('/');
+        const API = window.location.origin + (appPath === '/' ? '' : appPath);
         let currentPage = 'dashboard';
         let pendingImages = [];
         let editingPropertyId = null;
@@ -435,7 +497,6 @@
                 analysis: '利润分析'
             }[page];
             loadPage(page);
-            lucide.createIcons();
         }
 
         async function loadPage(page) {
@@ -451,7 +512,8 @@
                 case 'payments': await loadPayments(); break;
                 case 'analysis': await loadAnalysis(); break;
             }
-            lucide.createIcons();
+            // 等待DOM更新后再初始化图标
+            initIconsAfterUpdate();
         }
 
         async function loadDashboard() {
@@ -473,22 +535,22 @@
             document.getElementById('content').innerHTML = `
                 <div class="stats-grid">
                     <div class="stat-card primary">
-                        <div class="stat-icon primary"><i data-lucide="building-2"></i></div>
+                        <div class="stat-icon primary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg></div>
                         <div class="stat-label">房产总数</div>
                         <div class="stat-value">${totalProperties}</div>
                     </div>
                     <div class="stat-card success">
-                        <div class="stat-icon success"><i data-lucide="home"></i></div>
+                        <div class="stat-icon success"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg></div>
                         <div class="stat-label">出租率</div>
                         <div class="stat-value">${occupancyRate}%</div>
                     </div>
                     <div class="stat-card warning">
-                        <div class="stat-icon warning"><i data-lucide="door-open"></i></div>
+                        <div class="stat-icon warning"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg></div>
                         <div class="stat-label">空置房产</div>
                         <div class="stat-value">${vacantCount}</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon primary"><i data-lucide="wallet"></i></div>
+                        <div class="stat-icon primary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
                         <div class="stat-label">月租金收入</div>
                         <div class="stat-value">¥${(summary.income?.total_monthly_rent || 0).toLocaleString()}</div>
                     </div>
@@ -496,19 +558,19 @@
 
                 <div class="quick-actions">
                     <div class="quick-action" onclick="navigate('properties'); showPropertyModal();">
-                        <div class="quick-action-icon"><i data-lucide="plus-circle"></i></div>
+                        <div class="quick-action-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg></div>
                         <span class="quick-action-text">添加房产</span>
                     </div>
                     <div class="quick-action" onclick="navigate('leases'); showLeaseModal();">
-                        <div class="quick-action-icon"><i data-lucide="file-plus"></i></div>
+                        <div class="quick-action-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
                         <span class="quick-action-text">创建租约</span>
                     </div>
                     <div class="quick-action" onclick="navigate('tenants'); showTenantModal();">
-                        <div class="quick-action-icon"><i data-lucide="user-plus"></i></div>
+                        <div class="quick-action-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></div>
                         <span class="quick-action-text">添加租客</span>
                     </div>
                     <div class="quick-action" onclick="navigate('payments');">
-                        <div class="quick-action-icon"><i data-lucide="receipt"></i></div>
+                        <div class="quick-action-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
                         <span class="quick-action-text">查看付款</span>
                     </div>
                 </div>
@@ -516,7 +578,7 @@
                 <div class="dashboard-grid">
                     <div class="modern-card">
                         <div class="card-header">
-                            <h3 class="card-title"><i data-lucide="bell" style="width:18px;height:18px;margin-right:8px;"></i>租金提醒 (30天内)</h3>
+                            <h3 class="card-title"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>租金提醒 (30天内)</h3>
                         </div>
                         ${(reminders || []).length > 0 ? `
                             <div class="reminder-list">
@@ -536,7 +598,7 @@
                             </div>
                         ` : `
                             <div class="empty-state">
-                                <div class="empty-state-icon"><i data-lucide="check-circle"></i></div>
+                                <div class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div>
                                 <div class="empty-state-title">暂无待缴租金</div>
                                 <div class="empty-state-desc">所有租金都已按时缴纳</div>
                             </div>
@@ -544,7 +606,7 @@
                     </div>
                     <div class="modern-card">
                         <div class="card-header">
-                            <h3 class="card-title"><i data-lucide="bar-chart-2" style="width:18px;height:18px;margin-right:8px;"></i>租约概览</h3>
+                            <h3 class="card-title"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>租约概览</h3>
                         </div>
                         <div class="lease-overview">
                             <div class="overview-item">
@@ -569,7 +631,7 @@
 
                 <div class="modern-card">
                     <div class="card-header">
-                        <h3 class="card-title"><i data-lucide="building" style="width:18px;height:18px;margin-right:8px;"></i>房产列表</h3>
+                        <h3 class="card-title"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>房产列表</h3>
                         <button class="btn btn-primary btn-sm" onclick="navigate('properties')">查看全部</button>
                     </div>
                     ${(properties || []).length > 0 ? `
@@ -580,11 +642,11 @@
                                 return `
                                     <div class="property-card" onclick="viewProperty(${p.id})">
                                         <div class="property-card-img">
-                                            ${thumb ? `<img src="${API}${thumb}" alt="${p.name}">` : '<div style="width:100%;height:100%;background:var(--gray-200);display:flex;align-items:center;justify-content:center;"><i data-lucide="building-2" style="width:48px;height:48px;color:var(--gray-400);"></i></div>'}
+                                            ${thumb ? `<img src="${API}${thumb}" alt="${p.name}">` : '<div style="width:100%;height:100%;background:var(--gray-200);display:flex;align-items:center;justify-content:center;"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>'}
                                         </div>
                                         <div class="property-card-body">
                                             <div class="property-card-name">${p.name}</div>
-                                            <div class="property-card-address"><i data-lucide="map-pin" style="width:14px;height:14px;"></i>${p.address}</div>
+                                            <div class="property-card-address"></svg>${p.address}</div>
                                             <div class="property-card-footer">
                                                 <span class="property-card-price">¥${(p.rent_guide || 0).toLocaleString()}/月</span>
                                                 <span class="badge ${p.status === '出租中' ? 'badge-rented' : 'badge-vacant'}">${p.status}</span>
@@ -596,7 +658,7 @@
                         </div>
                     ` : `
                         <div class="empty-state">
-                            <div class="empty-state-icon"><i data-lucide="building-2"></i></div>
+                            <div class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div>
                             <div class="empty-state-title">暂无房产</div>
                             <div class="empty-state-desc">点击上方按钮添加第一个房产</div>
                         </div>
@@ -612,7 +674,7 @@
 
             document.getElementById('content').innerHTML = `
                 <div class="filter-bar">
-                    <button class="btn btn-primary" onclick="showPropertyModal()"><i data-lucide="plus-circle" style="width:16px;height:16px;"></i> 添加房产</button>
+                    <button class="btn btn-primary" onclick="showPropertyModal()"></svg> 添加房产</button>
                     <div style="flex:1;"></div>
                     <div style="display:flex;gap:8px;">
                         <span class="filter-tag ${!filterStatus ? 'active' : ''}" onclick="filterProperties('')">全部</span>
@@ -630,16 +692,16 @@
                                     const thumb = images.length > 0 ? images[0].thumbnail : null;
                                     return `
                                         <tr>
-                                            <td>${thumb ? `<img src="${API}${thumb}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">` : '<span style="color:var(--gray-400);"><i data-lucide="building-2" style="width:24px;height:24px;"></i></span>'}</td>
+                                            <td>${thumb ? `<img src="${API}${thumb}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">` : '<span style="color:var(--gray-400);"></svg></span>'}</td>
                                             <td><strong>${p.name}</strong></td>
                                             <td style="color:var(--gray-600);">${p.address}</td>
                                             <td>${p.area ? p.area + '㎡' : '-'}</td>
                                             <td style="color:var(--success);font-weight:600;">${p.rent_guide ? '¥' + p.rent_guide.toLocaleString() : '-'}</td>
                                             <td><span class="badge ${p.status === '出租中' ? 'badge-rented' : 'badge-vacant'}">${p.status}</span></td>
                                             <td class="actions">
-                                                <button class="btn-icon" onclick="viewProperty(${p.id})" title="查看"><i data-lucide="eye" style="width:16px;height:16px;"></i></button>
-                                                <button class="btn-icon" onclick="editProperty(${p.id})" title="编辑"><i data-lucide="pencil" style="width:16px;height:16px;"></i></button>
-                                                <button class="btn-icon" onclick="deleteProperty(${p.id})" title="删除" style="color:var(--danger);"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>
+                                                <button class="btn-icon" onclick="viewProperty(${p.id})" title="查看"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                                                <button class="btn-icon" onclick="editProperty(${p.id})" title="编辑"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                                                <button class="btn-icon" onclick="deleteProperty(${p.id})" title="删除" style="color:var(--danger);"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
                                             </td>
                                         </tr>
                                     `;
@@ -648,20 +710,20 @@
                         </table>
                     ` : `
                         <div class="empty-state">
-                            <div class="empty-state-icon"><i data-lucide="building-2"></i></div>
+                            <div class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div>
                             <div class="empty-state-title">${filterStatus ? '没有' + filterStatus + '的房产' : '暂无房产'}</div>
                             <div class="empty-state-desc">${filterStatus ? '试试其他筛选条件' : '点击上方按钮添加第一个房产'}</div>
-                            ${!filterStatus ? `<button class="btn btn-primary" onclick="showPropertyModal()"><i data-lucide="plus-circle" style="width:16px;height:16px;"></i> 添加房产</button>` : ''}
+                            ${!filterStatus ? `<button class="btn btn-primary" onclick="showPropertyModal()"></svg> 添加房产</button>` : ''}
                         </div>
                     `}
                 </div>
             `;
         }
 
-        function filterProperties(status) {
+        async function filterProperties(status) {
             window.propertyFilter = status;
-            loadProperties();
-            lucide.createIcons();
+            await loadProperties();
+            initIconsAfterUpdate();
         }
 
         function showPropertyModal() {
@@ -717,7 +779,7 @@
                     <div class="form-group">
                         <label>房产图片 (最多10张)</label>
                         <div class="image-upload-area" id="uploadArea">
-                            <i data-lucide="upload" style="width:32px;height:32px;color:var(--gray-400);margin-bottom:8px;"></i>
+                            </svg>
                             <div>点击或拖拽上传图片</div>
                             <div style="font-size:12px;color:var(--gray-500);margin-top:4px;">支持 JPG/PNG/GIF/WebP</div>
                         </div>
@@ -726,7 +788,7 @@
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
-                        <button type="submit" class="btn btn-primary"><i data-lucide="plus-circle" style="width:16px;height:16px;"></i> 添加</button>
+                        <button type="submit" class="btn btn-primary"></svg> 添加</button>
                     </div>
                 </form>
             `);
@@ -803,7 +865,7 @@
 
                 ${analysis && !analysis.error ? `
                     <div style="margin-top:24px;padding-top:24px;border-top:1px solid var(--gray-200);">
-                        <h4 style="margin-bottom:16px;display:flex;align-items:center;gap:8px;"><i data-lucide="bar-chart-2" style="width:18px;height:18px;"></i>收益分析</h4>
+                        <h4 style="margin-bottom:16px;display:flex;align-items:center;gap:8px;"></svg>收益分析</h4>
                         <div class="analysis-grid">
                             <div class="analysis-item">
                                 <div class="analysis-value">¥${analysis.income?.monthly_rent?.toLocaleString() || 0}</div>
@@ -827,7 +889,7 @@
 
                 <div class="form-actions">
                     <button class="btn btn-secondary" onclick="closeModal()">关闭</button>
-                    <button class="btn btn-primary" onclick="closeModal(); editProperty(${id});"><i data-lucide="pencil" style="width:16px;height:16px;"></i> 编辑</button>
+                    <button class="btn btn-primary" onclick="closeModal(); editProperty(${id});"></svg> 编辑</button>
                 </div>
             `);
         }
@@ -890,7 +952,7 @@
                     <div class="form-group">
                         <label>房产图片 (最多10张)</label>
                         <div class="image-upload-area" id="uploadArea">
-                            <i data-lucide="upload" style="width:32px;height:32px;color:var(--gray-400);margin-bottom:8px;"></i>
+                            </svg>
                             <div>点击或拖拽上传图片</div>
                             <div style="font-size:12px;color:var(--gray-500);margin-top:4px;">支持 JPG/PNG/GIF/WebP</div>
                         </div>
@@ -899,7 +961,7 @@
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
-                        <button type="submit" class="btn btn-primary"><i data-lucide="save" style="width:16px;height:16px;"></i> 保存</button>
+                        <button type="submit" class="btn btn-primary"></svg> 保存</button>
                     </div>
                 </form>
             `);
@@ -965,14 +1027,14 @@
 
             document.getElementById('content').innerHTML = `
                 <div class="filter-bar">
-                    <button class="btn btn-primary" onclick="showLeaseModal()"><i data-lucide="plus-circle" style="width:16px;height:16px;"></i> 创建租约</button>
+                    <button class="btn btn-primary" onclick="showLeaseModal()"></svg> 创建租约</button>
                 </div>
                 <div class="modern-card">
                     <div class="lease-stats">
-                        <span class="stat-item stat-pending"><i data-lucide="clock" style="width:14px;height:14px;margin-right:4px;"></i>待生效: ${stats.pending}</span>
-                        <span class="stat-item stat-active"><i data-lucide="check-circle" style="width:14px;height:14px;margin-right:4px;"></i>进行中: ${stats.active}</span>
-                        <span class="stat-item stat-renewed"><i data-lucide="refresh-cw" style="width:14px;height:14px;margin-right:4px;"></i>已续签: ${stats.renewed}</span>
-                        <span class="stat-item stat-terminated"><i data-lucide="x-circle" style="width:14px;height:14px;margin-right:4px;"></i>已终止: ${stats.terminated}</span>
+                        <span class="stat-item stat-pending"></svg>待生效: ${stats.pending}</span>
+                        <span class="stat-item stat-active"></svg>进行中: ${stats.active}</span>
+                        <span class="stat-item stat-renewed"></svg>已续签: ${stats.renewed}</span>
+                        <span class="stat-item stat-terminated"></svg>已终止: ${stats.terminated}</span>
                     </div>
                     ${(leases || []).length > 0 ? `
                         <table>
@@ -987,12 +1049,12 @@
                                         <td>${l.start_date} ~ ${l.end_date}</td>
                                         <td><span class="badge badge-${l.status}">${l.status_text}</span></td>
                                         <td class="actions">
-                                            <button class="btn btn-secondary btn-sm" onclick="viewLease(${l.id})"><i data-lucide="eye" style="width:14px;height:14px;"></i> 查看</button>
-                                            ${l.status === 'pending' ? `<button class="btn btn-primary btn-sm" onclick="activateLease(${l.id})"><i data-lucide="check-circle" style="width:14px;height:14px;"></i> 生效</button>` : ''}
-                                            ${l.status === 'active' ? `<button class="btn btn-secondary btn-sm" onclick="showAmendLeaseModal(${l.id})"><i data-lucide="edit" style="width:14px;height:14px;"></i> 变更</button>` : ''}
-                                            ${l.status === 'active' ? `<button class="btn btn-secondary btn-sm" onclick="showRenewLeaseModal(${l.id})"><i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> 续签</button>` : ''}
-                                            ${l.status === 'active' ? `<button class="btn btn-danger btn-sm" onclick="showTerminateLeaseModal(${l.id})"><i data-lucide="x-circle" style="width:14px;height:14px;"></i> 终止</button>` : ''}
-                                            ${l.status === 'pending' ? `<button class="btn btn-danger btn-sm" onclick="deleteLease(${l.id})"><i data-lucide="trash-2" style="width:14px;height:14px;"></i> 删除</button>` : ''}
+                                            <button class="btn btn-secondary btn-sm" onclick="viewLease(${l.id})"></svg> 查看</button>
+                                            ${l.status === 'pending' ? `<button class="btn btn-primary btn-sm" onclick="activateLease(${l.id})"></svg> 生效</button>` : ''}
+                                            ${l.status === 'active' ? `<button class="btn btn-secondary btn-sm" onclick="showAmendLeaseModal(${l.id})"></svg> 变更</button>` : ''}
+                                            ${l.status === 'active' ? `<button class="btn btn-secondary btn-sm" onclick="showRenewLeaseModal(${l.id})"></svg> 续签</button>` : ''}
+                                            ${l.status === 'active' ? `<button class="btn btn-danger btn-sm" onclick="showTerminateLeaseModal(${l.id})"></svg> 终止</button>` : ''}
+                                            ${l.status === 'pending' ? `<button class="btn btn-danger btn-sm" onclick="deleteLease(${l.id})"></svg> 删除</button>` : ''}
                                         </td>
                                     </tr>
                                 `).join('')}
@@ -1000,10 +1062,10 @@
                         </table>
                     ` : `
                         <div class="empty-state">
-                            <div class="empty-state-icon"><i data-lucide="file-text"></i></div>
+                            <div class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div>
                             <div class="empty-state-title">暂无租约</div>
                             <div class="empty-state-desc">点击上方按钮创建第一个租约</div>
-                            <button class="btn btn-primary" onclick="showLeaseModal()"><i data-lucide="plus-circle" style="width:16px;height:16px;"></i> 创建租约</button>
+                            <button class="btn btn-primary" onclick="showLeaseModal()"></svg> 创建租约</button>
                         </div>
                     `}
                 </div>
@@ -1047,12 +1109,12 @@
                         <div class="form-group"><label>租期开始 *</label><input name="start_date" type="date" required></div>
                         <div class="form-group"><label>租期结束 *</label><input name="end_date" type="date" required></div>
                     </div>
-                    <div style="font-size:12px;color:var(--gray-500);margin-top:8px;"><i data-lucide="info" style="width:12px;height:12px;margin-right:4px;"></i>付款日根据租期开始日期自动计算</div>
+                    <div style="font-size:12px;color:var(--gray-500);margin-top:8px;"></svg>付款日根据租期开始日期自动计算</div>
                     <div class="form-group"><label>备注</label><textarea name="remark" rows="2" placeholder="其他备注信息"></textarea></div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
                         <button type="button" class="btn btn-secondary" onclick="addLease(event, true)">保存并生效</button>
-                        <button type="submit" class="btn btn-primary"><i data-lucide="save" style="width:16px;height:16px;"></i> 保存草稿</button>
+                        <button type="submit" class="btn btn-primary"></svg> 保存草稿</button>
                     </div>
                 </form>
             `);
@@ -1162,7 +1224,7 @@
                 </div>
 
                 <div style="margin-top:20px;">
-                    <h4 style="margin-bottom:12px;display:flex;align-items:center;gap:8px;"><i data-lucide="credit-card" style="width:18px;height:18px;"></i>付款计划</h4>
+                    <h4 style="margin-bottom:12px;display:flex;align-items:center;gap:8px;"></svg>付款计划</h4>
                     ${payments && payments.length > 0 ? `
                         <table style="font-size:13px;">
                             <thead><tr><th>期数</th><th>到期日</th><th>覆盖周期</th><th>金额</th><th>状态</th><th>操作</th></tr></thead>
@@ -1170,8 +1232,8 @@
                                 ${payments.map((p, idx) => {
                                     const dueDate = new Date(p.due_date);
                                     const periodStart = new Date(dueDate);
-                                    periodStart.setMonth(periodStart.getMonth() - paymentCycle);
                                     const periodEnd = new Date(dueDate);
+                                    periodEnd.setMonth(periodEnd.getMonth() + paymentCycle);
                                     periodEnd.setDate(periodEnd.getDate() - 1);
                                     const statusBadge = p.current_status === 'overdue' ? '<span class="badge badge-overdue">逾期</span>' : p.current_status === 'paid' ? '<span class="badge badge-paid">已缴纳</span>' : '<span class="badge badge-pending">未到期</span>';
                                     return `<tr ${p.current_status === 'overdue' ? 'style="background:var(--danger-light);"' : ''}>
@@ -1180,27 +1242,30 @@
                                         <td>${formatDate(periodStart)} ~ ${formatDate(periodEnd)}</td>
                                         <td style="color:var(--success);font-weight:600;">¥${p.amount}</td>
                                         <td>${statusBadge}</td>
-                                        <td>${p.current_status !== 'paid' ? `<button class="btn btn-success btn-sm" onclick="markPaid(${p.id});viewLease(${id});"><i data-lucide="check-circle" style="width:14px;height:14px;"></i> 确认收款</button>` : '-'}</td>
+                                        <td>
+                                            ${p.current_status !== 'paid' ? `<button class="btn btn-success btn-sm" onclick="markPaid(${p.id});viewLease(${id});"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>` : ''}
+                                        </td>
                                     </tr>`;
                                 }).join('')}
                             </tbody>
                         </table>
+                        ${payments && payments.length > 0 ? `<div style="margin-top:12px;"><button class="btn btn-danger" onclick="deleteLeasePayments(${id});closeModal();"></svg> 删除该租约全部付款记录</button></div>` : ''}
                     ` : `<div style="color:var(--gray-500);font-size:13px;padding:20px;text-align:center;background:var(--gray-50);border-radius:var(--radius-sm);">暂无付款记录${l.status === "pending" ? "（租约未生效）" : ""}</div>`}
                 </div>
                 ${l.termination_reason ? `<div class="detail-grid" style="margin-top:20px;"><div class="detail-item"><div class="detail-label">终止原因</div><div class="detail-value">${l.termination_reason}</div></div><div class="detail-item"><div class="detail-label">终止日期</div><div class="detail-value">${l.termination_date}</div></div></div>` : ''}
                 <div style="margin-top:20px;">
-                    <h4 style="margin-bottom:12px;display:flex;align-items:center;gap:8px;"><i data-lucide="file-text" style="width:18px;height:18px;"></i>合同文件</h4>
+                    <h4 style="margin-bottom:12px;display:flex;align-items:center;gap:8px;"></svg>合同文件</h4>
                     <div class="contract-upload-area" id="contractUploadArea">
                         <input type="file" id="contractFileInput" accept=".pdf,.jpg,.jpeg,.png,.gif" style="display:none;" onchange="uploadContract(this, ${l.id})">
-                        <button class="btn btn-secondary" onclick="document.getElementById('contractFileInput').click()"><i data-lucide="upload" style="width:16px;height:16px;"></i> 上传合同</button>
+                        <button class="btn btn-secondary" onclick="document.getElementById('contractFileInput').click()"></svg> 上传合同</button>
                         <span style="color:var(--gray-500);font-size:12px;margin-left:8px;">支持 PDF、图片格式，最大20MB</span>
                     </div>
                     ${l.contract_files && l.contract_files.length > 0 ? `
                         <div class="contract-files" style="margin-top:12px;">
                             ${l.contract_files.map(f => `<div class="contract-file-item">
-                                <i data-lucide="file" style="width:16px;height:16px;"></i>
-                                <a href="/contracts/${l.id}/${f.filename}" target="_blank" style="color:var(--primary);text-decoration:none;">${f.original_name}</a>
-                                <button class="btn btn-danger btn-sm" style="margin-left:8px;padding:4px 8px;" onclick="deleteContract(${l.id}, ${f.id})"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+                                <a href="${API}/contracts/${l.id}/${f.filename}" target="_blank" style="color:var(--primary);text-decoration:none;">${f.original_name}</a>
+                                <button class="btn btn-danger btn-sm" style="margin-left:8px;padding:4px 8px;" onclick="deleteContract(${l.id}, ${f.id})"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
                             </div>`).join('')}
                         </div>
                     ` : '<div style="color:var(--gray-500);font-size:13px;margin-top:8px;">暂无合同文件</div>'}
@@ -1265,7 +1330,7 @@
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
                         <button type="button" class="btn btn-secondary" onclick="renewLease(event, ${id}, true)">保存并生效</button>
-                        <button type="submit" class="btn btn-primary"><i data-lucide="save" style="width:16px;height:16px;"></i> 保存草稿</button>
+                        <button type="submit" class="btn btn-primary"></svg> 保存草稿</button>
                     </div>
                 </form>
             `);
@@ -1317,7 +1382,7 @@
                     <div class="form-group"><label>备注</label><textarea name="remark" rows="2">${l.remark || ''}</textarea></div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
-                        <button type="submit" class="btn btn-primary"><i data-lucide="check" style="width:16px;height:16px;"></i> 确认变更</button>
+                        <button type="submit" class="btn btn-primary"></svg> 确认变更</button>
                     </div>
                 </form>
             `);
@@ -1359,7 +1424,7 @@
                     <div class="form-group"><label>备注</label><textarea name="remark" rows="3" placeholder="请输入终止说明"></textarea></div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
-                        <button type="submit" class="btn btn-danger"><i data-lucide="x-circle" style="width:16px;height:16px;"></i> 确认终止</button>
+                        <button type="submit" class="btn btn-danger"></svg> 确认终止</button>
                     </div>
                 </form>
             `);
@@ -1397,7 +1462,7 @@
 
             document.getElementById('content').innerHTML = `
                 <div class="filter-bar">
-                    <button class="btn btn-primary" onclick="showTenantModal()"><i data-lucide="plus-circle" style="width:16px;height:16px;"></i> 添加租客</button>
+                    <button class="btn btn-primary" onclick="showTenantModal()"></svg> 添加租客</button>
                 </div>
                 <div class="modern-card">
                     ${(tenants || []).length > 0 ? `
@@ -1417,14 +1482,14 @@
                                             </td>
                                             <td>
                                                 <span class="tenant-phone" onclick="copyText('${t.phone}')" title="点击复制">
-                                                    <i data-lucide="phone" style="width:14px;height:14px;margin-right:4px;"></i>${t.phone}
+                                                    </svg>${t.phone}
                                                 </span>
                                             </td>
                                             <td style="color:var(--gray-600);">${t.id_card || '-'}</td>
                                             <td style="color:var(--gray-600);">${t.emergency_contact ? t.emergency_contact + ' ' + t.emergency_phone : '-'}</td>
                                             <td class="actions">
-                                                <button class="btn-icon" onclick="editTenant(${t.id})" title="编辑"><i data-lucide="pencil" style="width:16px;height:16px;"></i></button>
-                                                <button class="btn-icon" onclick="deleteTenant(${t.id})" title="删除" style="color:var(--danger);"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>
+                                                <button class="btn-icon" onclick="editTenant(${t.id})" title="编辑"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                                                <button class="btn-icon" onclick="deleteTenant(${t.id})" title="删除" style="color:var(--danger);"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
                                             </td>
                                         </tr>
                                     `;
@@ -1433,10 +1498,10 @@
                         </table>
                     ` : `
                         <div class="empty-state">
-                            <div class="empty-state-icon"><i data-lucide="users"></i></div>
+                            <div class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div>
                             <div class="empty-state-title">暂无租客</div>
                             <div class="empty-state-desc">点击上方按钮添加第一个租客</div>
-                            <button class="btn btn-primary" onclick="showTenantModal()"><i data-lucide="plus-circle" style="width:16px;height:16px;"></i> 添加租客</button>
+                            <button class="btn btn-primary" onclick="showTenantModal()"></svg> 添加租客</button>
                         </div>
                     `}
                 </div>
@@ -1508,7 +1573,7 @@
                     <div class="form-group"><label>备注</label><textarea name="remark" rows="2" placeholder="其他备注信息"></textarea></div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
-                        <button type="submit" class="btn btn-primary"><i data-lucide="plus-circle" style="width:16px;height:16px;"></i> 添加</button>
+                        <button type="submit" class="btn btn-primary"></svg> 添加</button>
                     </div>
                 </form>
             `);
@@ -1571,7 +1636,7 @@
                     <div class="form-group"><label>备注</label><textarea name="remark" rows="2">${t.remark || ''}</textarea></div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
-                        <button type="submit" class="btn btn-primary"><i data-lucide="save" style="width:16px;height:16px;"></i> 保存</button>
+                        <button type="submit" class="btn btn-primary"></svg> 保存</button>
                     </div>
                 </form>
             `);
@@ -1655,9 +1720,9 @@
                 </div>
                 <div class="modern-card">
                     <div class="lease-stats">
-                        <span class="stat-item stat-pending"><i data-lucide="clock" style="width:14px;height:14px;margin-right:4px;"></i>未到期: ${stats.pending}</span>
-                        <span class="stat-item stat-overdue" style="background:var(--danger-light);color:var(--danger);"><i data-lucide="alert-circle" style="width:14px;height:14px;margin-right:4px;"></i>逾期: ${stats.overdue}</span>
-                        <span class="stat-item stat-paid"><i data-lucide="check-circle" style="width:14px;height:14px;margin-right:4px;"></i>已缴纳: ${stats.paid}</span>
+                        <span class="stat-item stat-pending"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">undefined</svg>未到期: ${stats.pending}</span>
+                        <span class="stat-item stat-overdue" style="background:var(--danger-light);color:var(--danger);"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">undefined</svg>逾期: ${stats.overdue}</span>
+                        <span class="stat-item stat-paid"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>已缴纳: ${stats.paid}</span>
                     </div>
                     ${Object.keys(leasePayments).length > 0 ? `
                         ${Object.entries(leasePayments).map(([leaseId, pmts]) => {
@@ -1669,14 +1734,15 @@
                                 <div class="payment-group">
                                     <div class="payment-group-header" onclick="toggleLeasePayments(${leaseId})">
                                         <div style="display:flex;align-items:center;gap:12px;">
-                                            <i data-lucide="file-text" style="width:18px;height:18px;color:var(--gray-500);"></i>
+                                            </svg>
                                             <span style="font-weight:600;">${lease.name || '租约 #' + leaseId}</span>
                                             <span style="color:var(--gray-500);font-size:13px;">${propMap[lease.property_id] || ''}</span>
                                             <span style="color:var(--gray-400);font-size:13px;">${cycleMap[lease.payment_cycle] || '月付'}</span>
                                         </div>
                                         <div style="display:flex;align-items:center;gap:12px;">
                                             ${leaseStatus}
-                                            <i data-lucide="chevron-down" id="chevron-${leaseId}" style="width:18px;height:18px;color:var(--gray-400);transition:transform 0.2s;"></i>
+                                            <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteLeasePayments(${leaseId});" title="删除该租约全部付款记录"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                                            </svg>
                                         </div>
                                     </div>
                                     <div class="payment-group-items" id="lease-payments-${leaseId}">
@@ -1687,9 +1753,8 @@
                                                     const paymentCycle = lease.payment_cycle || 1;
                                                     const dueDate = new Date(p.due_date);
                                                     const periodStart = new Date(dueDate);
-                                                    periodStart.setMonth(periodStart.getMonth() - paymentCycle);
-                                                    periodStart.setDate(periodStart.getDate() + 1);
                                                     const periodEnd = new Date(dueDate);
+                                                    periodEnd.setMonth(periodEnd.getMonth() + paymentCycle);
                                                     periodEnd.setDate(periodEnd.getDate() - 1);
                                                     const statusBadge = p.current_status === 'overdue' ? '<span class="badge badge-overdue">逾期</span>' : p.current_status === 'paid' ? '<span class="badge badge-paid">已缴纳</span>' : '<span class="badge badge-pending">未到期</span>';
                                                     return `<tr ${p.current_status === 'overdue' ? 'style="background:var(--danger-light);"' : ''}>
@@ -1699,7 +1764,9 @@
                                                         <td style="color:var(--success);font-weight:600;">¥${p.amount.toLocaleString()}</td>
                                                         <td>${statusBadge}</td>
                                                         <td>${p.paid_date || '-'}</td>
-                                                        <td>${p.current_status !== 'paid' ? `<button class="btn btn-success btn-sm" onclick="markPaid(${p.id});loadPayments();"><i data-lucide="check-circle" style="width:14px;height:14px;"></i> 确认收款</button>` : '-'}</td>
+                                                        <td>
+                                                            ${p.current_status !== 'paid' ? `<button class="btn btn-success btn-sm" onclick="markPaid(${p.id});loadPayments();"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>` : `<button class="btn btn-warning btn-sm" onclick="revertPayment(${p.id});loadPayments();"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>`}
+                                                        </td>
                                                     </tr>`;
                                                 }).join('')}
                                             </tbody>
@@ -1710,7 +1777,7 @@
                         }).join('')}
                     ` : `
                         <div class="empty-state">
-                            <div class="empty-state-icon"><i data-lucide="credit-card"></i></div>
+                            <div class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div>
                             <div class="empty-state-title">暂无付款记录</div>
                             <div class="empty-state-desc">租约生效后将自动生成付款计划</div>
                         </div>
@@ -1767,9 +1834,9 @@
 
             document.querySelector('.modern-card').innerHTML = `
                 <div class="lease-stats">
-                    <span class="stat-item stat-pending"><i data-lucide="clock" style="width:14px;height:14px;margin-right:4px;"></i>未到期: ${stats.pending}</span>
-                    <span class="stat-item stat-overdue" style="background:var(--danger-light);color:var(--danger);"><i data-lucide="alert-circle" style="width:14px;height:14px;margin-right:4px;"></i>逾期: ${stats.overdue}</span>
-                    <span class="stat-item stat-paid"><i data-lucide="check-circle" style="width:14px;height:14px;margin-right:4px;"></i>已缴纳: ${stats.paid}</span>
+                    <span class="stat-item stat-pending"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">undefined</svg>未到期: ${stats.pending}</span>
+                    <span class="stat-item stat-overdue" style="background:var(--danger-light);color:var(--danger);"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">undefined</svg>逾期: ${stats.overdue}</span>
+                    <span class="stat-item stat-paid"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>已缴纳: ${stats.paid}</span>
                 </div>
                 ${Object.keys(leasePayments).length > 0 ? `
                     ${Object.entries(leasePayments).map(([leaseId, pmts]) => {
@@ -1781,14 +1848,15 @@
                             <div class="payment-group">
                                 <div class="payment-group-header" onclick="toggleLeasePayments(${leaseId})">
                                     <div style="display:flex;align-items:center;gap:12px;">
-                                        <i data-lucide="file-text" style="width:18px;height:18px;color:var(--gray-500);"></i>
+                                        </svg>
                                         <span style="font-weight:600;">${lease.name || '租约 #' + leaseId}</span>
                                         <span style="color:var(--gray-500);font-size:13px;">${propMap[lease.property_id] || ''}</span>
                                         <span style="color:var(--gray-400);font-size:13px;">${cycleMap[lease.payment_cycle] || '月付'}</span>
                                     </div>
                                     <div style="display:flex;align-items:center;gap:12px;">
                                         ${leaseStatus}
-                                        <i data-lucide="chevron-down" id="chevron-${leaseId}" style="width:18px;height:18px;color:var(--gray-400);transition:transform 0.2s;"></i>
+                                        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteLeasePayments(${leaseId});" title="删除该租约全部付款记录"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                                        </svg>
                                     </div>
                                 </div>
                                 <div class="payment-group-items" id="lease-payments-${leaseId}">
@@ -1799,9 +1867,8 @@
                                                 const paymentCycle = lease.payment_cycle || 1;
                                                 const dueDate = new Date(p.due_date);
                                                 const periodStart = new Date(dueDate);
-                                                periodStart.setMonth(periodStart.getMonth() - paymentCycle);
-                                                periodStart.setDate(periodStart.getDate() + 1);
                                                 const periodEnd = new Date(dueDate);
+                                                periodEnd.setMonth(periodEnd.getMonth() + paymentCycle);
                                                 periodEnd.setDate(periodEnd.getDate() - 1);
                                                 const statusBadge = p.current_status === 'overdue' ? '<span class="badge badge-overdue">逾期</span>' : p.current_status === 'paid' ? '<span class="badge badge-paid">已缴纳</span>' : '<span class="badge badge-pending">未到期</span>';
                                                 return `<tr ${p.current_status === 'overdue' ? 'style="background:var(--danger-light);"' : ''}>
@@ -1811,7 +1878,9 @@
                                                     <td style="color:var(--success);font-weight:600;">¥${p.amount.toLocaleString()}</td>
                                                     <td>${statusBadge}</td>
                                                     <td>${p.paid_date || '-'}</td>
-                                                    <td>${p.current_status !== 'paid' ? `<button class="btn btn-success btn-sm" onclick="markPaid(${p.id});loadPaymentsFiltered();"><i data-lucide="check-circle" style="width:14px;height:14px;"></i> 确认收款</button>` : '-'}</td>
+                                                    <td>
+                                                        ${p.current_status !== 'paid' ? `<button class="btn btn-success btn-sm" onclick="markPaid(${p.id});loadPaymentsFiltered();"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>` : `<button class="btn btn-warning btn-sm" onclick="revertPayment(${p.id});loadPaymentsFiltered();"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>`}
+                                                    </td>
                                                 </tr>`;
                                             }).join('')}
                                         </tbody>
@@ -1822,13 +1891,13 @@
                     }).join('')}
                 ` : `
                     <div class="empty-state">
-                        <div class="empty-state-icon"><i data-lucide="credit-card"></i></div>
+                        <div class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div>
                         <div class="empty-state-title">暂无付款记录</div>
                         <div class="empty-state-desc">${statusFilter ? '试试其他筛选条件' : '租约生效后将自动生成付款计划'}</div>
                     </div>
                 `}
             `;
-            lucide.createIcons();
+            initIconsAfterUpdate();
         }
 
         async function markPaid(id) {
@@ -1839,6 +1908,30 @@
             });
             if (result.error) return alert(result.error);
             loadPayments();
+        }
+
+        async function deletePayment(id) {
+            if (!confirm('确定要删除这条付款记录吗？')) return;
+            const result = await api(`/payments/${id}`, { method: 'DELETE' });
+            if (result.error) return alert(result.error);
+            loadPayments();
+        }
+
+        async function deleteLeasePayments(leaseId) {
+            if (!confirm('确定要删除该租约的全部付款记录吗？此操作不可撤销。')) return;
+            const result = await api(`/payments/lease/${leaseId}`, { method: 'DELETE' });
+            if (result.error) return alert(result.error);
+            loadPayments();
+        }
+
+        async function revertPayment(id) {
+            if (!confirm('确定要将此付款记录修改为"未缴纳"状态吗？')) return;
+            const result = await api(`/payments/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'pending' })
+            });
+            if (result.error) return alert(result.error);
         }
 
         async function loadAnalysis() {
@@ -1857,26 +1950,26 @@
 
             document.getElementById('content').innerHTML = `
                 <div class="modern-card" style="margin-bottom:24px;">
-                    <h3 style="margin-bottom:24px;display:flex;align-items:center;gap:8px;"><i data-lucide="pie-chart" style="width:20px;height:20px;"></i>总体概览</h3>
+                    <h3 style="margin-bottom:24px;display:flex;align-items:center;gap:8px;"></svg>总体概览</h3>
                     <div class="stats-grid">
                         <div class="stat-card primary">
-                            <div class="stat-icon primary"><i data-lucide="building-2"></i></div>
-                            <div class="stat-label">房产总数</div>
+                            <div class="stat-icon primary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg></div>
+                        <div class="stat-label">房产总数</div>
                             <div class="stat-value">${totalProperties}</div>
                         </div>
                         <div class="stat-card success">
-                            <div class="stat-icon success"><i data-lucide="percent"></i></div>
-                            <div class="stat-label">出租率</div>
+                            <div class="stat-icon success"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg></div>
+                        <div class="stat-label">出租率</div>
                             <div class="stat-value">${occupancyRate}%</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-icon primary"><i data-lucide="wallet"></i></div>
-                            <div class="stat-label">月租金收入</div>
+                            <div class="stat-icon primary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+                        <div class="stat-label">月租金收入</div>
                             <div class="stat-value" style="color:var(--success);">¥${(summary.income?.total_monthly_rent || 0).toLocaleString()}</div>
                         </div>
                         <div class="stat-card ${(summary.profit || 0) >= 0 ? 'success' : 'danger'}">
-                            <div class="stat-icon ${(summary.profit || 0) >= 0 ? 'success' : 'danger'}"><i data-lucide="trending-up"></i></div>
-                            <div class="stat-label">年度利润</div>
+                            <div class="stat-icon ${(summary.profit || 0) >= 0 ? 'success' : 'danger'}"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg></div>
+                        <div class="stat-label">年度利润</div>
                             <div class="stat-value" style="color:${(summary.profit || 0) >= 0 ? 'var(--success)' : 'var(--danger)'};">
                                 ¥${(summary.profit || 0).toLocaleString()}
                             </div>
@@ -1884,7 +1977,7 @@
                     </div>
                 </div>
                 <div class="modern-card">
-                    <h3 style="margin-bottom:20px;display:flex;align-items:center;gap:8px;"><i data-lucide="bar-chart-3" style="width:20px;height:20px;"></i>各房产收益分析</h3>
+                    <h3 style="margin-bottom:20px;display:flex;align-items:center;gap:8px;"></svg>各房产收益分析</h3>
                     ${propertiesWithAnalysis.length > 0 ? `
                         <table>
                             <thead><tr><th>房产</th><th>状态</th><th>月租金</th><th>年租金</th><th>年成本</th><th>年度利润</th></tr></thead>
@@ -1910,7 +2003,7 @@
                         </table>
                     ` : `
                         <div class="empty-state">
-                            <div class="empty-state-icon"><i data-lucide="bar-chart-3"></i></div>
+                            <div class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div>
                             <div class="empty-state-title">暂无数据</div>
                             <div class="empty-state-desc">添加房产后即可查看收益分析</div>
                         </div>
@@ -1923,7 +2016,7 @@
             document.getElementById('modalTitle').textContent = title;
             document.getElementById('modalBody').innerHTML = body;
             document.getElementById('modal').classList.add('show');
-            setTimeout(() => lucide.createIcons(), 10);
+            initIconsAfterUpdate();
             initImageUpload();
         }
 
@@ -1990,7 +2083,7 @@
                     <button class="remove-btn" onclick="removeImage(${index})">&times;</button>
                 </div>
             `).join('');
-            lucide.createIcons();
+            initIconsAfterUpdate();
         }
 
         function setCover(index) {
@@ -2013,10 +2106,17 @@
 
         document.querySelectorAll('.nav-item').forEach(el => el.addEventListener('click', () => navigate(el.dataset.page)));
 
-        document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
+        // 初始化应用
+        function initApp() {
             loadDashboard();
-        });
+        }
+
+        // 等待 DOM 加载完成后初始化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
     </script>
 </body>
 </html>

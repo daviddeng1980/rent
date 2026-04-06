@@ -119,6 +119,27 @@ def delete_payment(id):
     db.session.commit()
     return jsonify({"message": "Payment deleted"}), 200
 
+@payment_bp.route('/payments/lease/<int:lease_id>', methods=['DELETE'])
+def delete_lease_payments(lease_id):
+    """删除指定租约的所有付款记录"""
+    # 检查租约是否存在
+    lease = Lease.query.get(lease_id)
+    if not lease:
+        return jsonify({"error": "租约不存在"}), 404
+
+    # 检查租约状态
+    if lease.status == 'active':
+        return jsonify({"error": "已有进行中的关联租约，无法删除付款记录"}), 400
+
+    # 检查是否有已缴纳的记录
+    paid_count = Payment.query.filter_by(lease_id=lease_id, status='paid').count()
+    if paid_count > 0:
+        return jsonify({"error": f"该租约有 {paid_count} 条已缴纳的付款记录，无法删除"}), 400
+
+    deleted = Payment.query.filter_by(lease_id=lease_id).delete()
+    db.session.commit()
+    return jsonify({"message": f"已删除 {deleted} 条付款记录"}), 200
+
 @payment_bp.route('/reminders', methods=['GET'])
 def get_reminders():
     """获取30天内即将到期的租金提醒"""
