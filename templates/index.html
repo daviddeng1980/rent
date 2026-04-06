@@ -441,9 +441,9 @@
         // 例如：页面在 http://domain.com/rent/ 或 http://domain.com/rent/properties
         // 则API请求发送到 http://domain.com/rent
         const pathname = window.location.pathname;
-        // 分割路径，移除最后一段（因为可能是路由或 index.html）
+        // 分割路径，移除最后一段（因为可能是路由或 index.html），但如果只有一段则保留
         const segments = pathname.split('/').filter(s => s);
-        if (segments.length > 0) {
+        if (segments.length > 1) {
             segments.pop(); // 移除最后一段
         }
         const appPath = '/' + segments.join('/');
@@ -470,7 +470,13 @@
                 const text = await res.text();
                 if (!res.ok) {
                     console.error('API Error:', res.status, text);
-                    return { error: `请求失败 (${res.status})` };
+                    // 尝试解析服务器返回的错误信息
+                    try {
+                        const errJson = JSON.parse(text);
+                        return { error: errJson.error || `请求失败 (${res.status})` };
+                    } catch {
+                        return { error: `请求失败 (${res.status}): ${text}` };
+                    }
                 }
                 try {
                     return JSON.parse(text);
