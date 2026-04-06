@@ -1,0 +1,2022 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>租金管理系统</title>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #818cf8;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --danger: #ef4444;
+            --danger-light: #fee2e2;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --sidebar-bg: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
+            --card-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+            --card-shadow-hover: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --radius: 16px;
+            --radius-sm: 8px;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--gray-50); color: var(--gray-800); line-height: 1.6; }
+
+        /* Sidebar */
+        .sidebar { position: fixed; left: 0; top: 0; width: 280px; height: 100vh; background: var(--sidebar-bg); color: white; padding: 0; overflow-y: auto; z-index: 100; box-shadow: 4px 0 20px rgba(0,0,0,0.15); }
+        .sidebar-header { padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .logo { font-size: 24px; font-weight: 700; display: flex; align-items: center; gap: 12px; }
+        .logo-icon { width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+        .nav-section { color: rgba(255,255,255,0.4); font-size: 11px; text-transform: uppercase; padding: 24px 24px 8px; letter-spacing: 1px; font-weight: 600; }
+        .nav-item { padding: 14px 24px; cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,0.7); border-left: 3px solid transparent; margin: 2px 0; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-item.active { background: rgba(255,255,255,0.12); color: white; border-left-color: var(--primary-light); }
+        .nav-item i { width: 20px; height: 20px; opacity: 0.8; }
+        .nav-item.active i { opacity: 1; }
+
+        /* Main Content */
+        .main { margin-left: 280px; min-height: 100vh; }
+        .header { background: white; padding: 20px 32px; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .header h1 { font-size: 24px; font-weight: 700; color: var(--gray-800); }
+        .header-time { color: var(--gray-500); font-size: 14px; display: flex; align-items: center; gap: 8px; }
+        .content { padding: 32px; max-width: 1400px; margin: 0 auto; }
+
+        /* Modern Card */
+        .modern-card { background: white; border-radius: var(--radius); box-shadow: var(--card-shadow); padding: 24px; margin-bottom: 24px; transition: var(--transition); }
+        .modern-card:hover { box-shadow: var(--card-shadow-hover); transform: translateY(-2px); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .card-title { font-size: 18px; font-weight: 600; color: var(--gray-800); }
+
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 32px; }
+        .stat-card { background: white; border-radius: var(--radius); padding: 24px; box-shadow: var(--card-shadow); transition: var(--transition); position: relative; overflow: hidden; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: var(--card-shadow-hover); }
+        .stat-card::before { content: ''; position: absolute; top: 0; right: 0; width: 80px; height: 80px; border-radius: 0 0 0 80px; opacity: 0.1; }
+        .stat-card.primary::before { background: var(--primary); }
+        .stat-card.success::before { background: var(--success); }
+        .stat-card.warning::before { background: var(--warning); }
+        .stat-card.danger::before { background: var(--danger); }
+        .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+        .stat-icon.primary { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; }
+        .stat-icon.success { background: linear-gradient(135deg, var(--success), #34d399); color: white; }
+        .stat-icon.warning { background: linear-gradient(135deg, var(--warning), #fbbf24); color: white; }
+        .stat-icon.danger { background: linear-gradient(135deg, var(--danger), #f87171); color: white; }
+        .stat-label { color: var(--gray-500); font-size: 14px; margin-bottom: 8px; }
+        .stat-value { font-size: 32px; font-weight: 700; color: var(--gray-800); }
+        .stat-trend { font-size: 12px; margin-top: 4px; }
+        .stat-trend.up { color: var(--success); }
+        .stat-trend.down { color: var(--danger); }
+
+        /* Dashboard Grid */
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
+
+        /* Reminder List */
+        .reminder-list { display: flex; flex-direction: column; gap: 12px; }
+        .reminder-item { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: var(--gray-50); border-radius: var(--radius-sm); border-left: 4px solid var(--primary); transition: var(--transition); }
+        .reminder-item:hover { background: var(--gray-100); transform: translateX(4px); }
+        .reminder-item.overdue { border-left-color: var(--danger); background: var(--danger-light); }
+        .reminder-info { flex: 1; }
+        .reminder-property { font-weight: 600; color: var(--gray-800); }
+        .reminder-tenant { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
+        .reminder-amount { font-size: 20px; font-weight: 700; color: var(--success); margin: 0 20px; }
+        .reminder-date { text-align: right; min-width: 90px; }
+        .reminder-date.urgent { color: var(--danger); font-weight: 600; }
+
+        /* Lease Overview */
+        .lease-overview { display: flex; flex-direction: column; gap: 12px; }
+        .overview-item { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: var(--gray-50); border-radius: var(--radius-sm); transition: var(--transition); }
+        .overview-item:hover { background: var(--gray-100); }
+        .overview-label { color: var(--gray-600); font-weight: 500; }
+        .overview-value { font-weight: 700; font-size: 18px; padding: 6px 16px; border-radius: var(--radius-sm); }
+
+        /* Property Grid */
+        .property-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+        .property-card { background: white; border-radius: var(--radius); box-shadow: var(--card-shadow); overflow: hidden; transition: var(--transition); cursor: pointer; }
+        .property-card:hover { transform: translateY(-4px); box-shadow: var(--card-shadow-hover); }
+        .property-card-img { height: 180px; overflow: hidden; background: var(--gray-200); }
+        .property-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+        .property-card:hover .property-card-img img { transform: scale(1.05); }
+        .property-card-body { padding: 20px; }
+        .property-card-name { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--gray-800); }
+        .property-card-address { color: var(--gray-500); font-size: 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+        .property-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--gray-200); }
+        .property-card-price { font-size: 20px; font-weight: 700; color: var(--primary); }
+
+        /* Quick Actions */
+        .quick-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+        .quick-action { background: white; border-radius: var(--radius); padding: 20px; box-shadow: var(--card-shadow); display: flex; align-items: center; gap: 16px; cursor: pointer; transition: var(--transition); border: 2px solid transparent; }
+        .quick-action:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .quick-action-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: var(--gray-100); color: var(--primary); }
+        .quick-action-text { font-weight: 600; color: var(--gray-800); }
+
+        /* Buttons */
+        .btn { padding: 10px 20px; border-radius: var(--radius-sm); border: none; cursor: pointer; font-size: 14px; font-weight: 500; transition: var(--transition); display: inline-flex; align-items: center; gap: 8px; }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #059669; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-secondary { background: var(--gray-100); color: var(--gray-700); }
+        .btn-secondary:hover { background: var(--gray-200); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-icon { width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); background: var(--gray-100); color: var(--gray-600); border: none; cursor: pointer; transition: var(--transition); }
+        .btn-icon:hover { background: var(--primary); color: white; }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--gray-200); }
+        th { background: var(--gray-50); font-weight: 600; color: var(--gray-700); }
+        tr:hover { background: var(--gray-50); }
+        tr { transition: var(--transition); }
+
+        /* Status Badges */
+        .badge { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+        .badge-rented { background: var(--success-light); color: var(--success); }
+        .badge-vacant { background: var(--warning-light); color: var(--warning); }
+        .badge-active { background: #dbeafe; color: var(--primary); }
+        .badge-renewed { background: #e0e7ff; color: #4338ca; }
+        .badge-terminated { background: var(--gray-200); color: var(--gray-600); }
+        .badge-expired { background: var(--danger-light); color: var(--danger); }
+        .badge-overdue { background: var(--danger-light); color: var(--danger); }
+        .badge-paid { background: var(--success-light); color: var(--success); }
+        .badge-pending { background: var(--warning-light); color: var(--warning); }
+        .badge-cancelled { background: var(--gray-200); color: var(--gray-600); }
+        .badge-pending { background: var(--warning-light); color: var(--warning); }
+
+        /* Filter Bar */
+        .filter-bar { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; align-items: center; }
+        .filter-bar select { padding: 10px 16px; border: 1px solid var(--gray-300); border-radius: var(--radius-sm); font-size: 14px; background: white; cursor: pointer; }
+        .filter-tag { padding: 8px 16px; background: var(--gray-100); border-radius: 20px; font-size: 13px; cursor: pointer; transition: var(--transition); border: 2px solid transparent; }
+        .filter-tag:hover { border-color: var(--primary); }
+        .filter-tag.active { background: var(--primary); color: white; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; opacity: 0; transition: opacity 0.3s; }
+        .modal.show { display: flex; opacity: 1; }
+        .modal-content { background: white; border-radius: var(--radius); padding: 32px; width: 600px; max-width: 90%; max-height: 90vh; overflow-y: auto; transform: translateY(20px); transition: transform 0.3s; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+        .modal.show .modal-content { transform: translateY(0); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--gray-200); }
+        .modal-header h2 { font-size: 20px; font-weight: 700; color: var(--gray-800); }
+        .close { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--gray-100); cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+        .close:hover { background: var(--danger); color: white; }
+
+        /* Forms */
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--gray-700); font-size: 14px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--gray-300); border-radius: var(--radius-sm); font-size: 14px; transition: var(--transition); }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; border-top: 1px solid var(--gray-200); padding-top: 20px; }
+
+        /* Detail Grid */
+        .detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        .detail-item { padding: 16px; background: var(--gray-50); border-radius: var(--radius-sm); }
+        .detail-label { font-size: 12px; color: var(--gray-500); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .detail-value { font-size: 15px; font-weight: 500; color: var(--gray-800); }
+
+        /* Empty State */
+        .empty-state { text-align: center; padding: 64px 32px; color: var(--gray-500); }
+        .empty-state-icon { width: 80px; height: 80px; margin: 0 auto 20px; background: var(--gray-100); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .empty-state-icon i { width: 40px; height: 40px; color: var(--gray-400); }
+        .empty-state-title { font-size: 18px; font-weight: 600; color: var(--gray-700); margin-bottom: 8px; }
+        .empty-state-desc { font-size: 14px; color: var(--gray-500); margin-bottom: 20px; }
+
+        /* Timeline */
+        .timeline { position: relative; padding-left: 30px; }
+        .timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: var(--gray-200); }
+        .timeline-item { position: relative; padding-bottom: 20px; }
+        .timeline-item::before { content: ''; position: absolute; left: -24px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--primary); border: 2px solid white; box-shadow: 0 0 0 2px var(--primary); }
+        .timeline-item.success::before { background: var(--success); box-shadow: 0 0 0 2px var(--success); }
+        .timeline-item.warning::before { background: var(--warning); box-shadow: 0 0 0 2px var(--warning); }
+        .timeline-item.danger::before { background: var(--danger); box-shadow: 0 0 0 2px var(--danger); }
+
+        /* Progress Ring */
+        .progress-ring { width: 100px; height: 100px; position: relative; }
+        .progress-ring svg { transform: rotate(-90deg); }
+        .progress-ring circle { fill: none; stroke-width: 8; }
+        .progress-ring .bg { stroke: var(--gray-200); }
+        .progress-ring .progress { stroke: var(--primary); stroke-linecap: round; transition: stroke-dashoffset 0.5s; }
+        .progress-ring .text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 20px; font-weight: 700; }
+
+        /* Avatar */
+        .avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: white; font-size: 16px; }
+        .avatar-sm { width: 32px; height: 32px; font-size: 14px; }
+        .avatar-lg { width: 56px; height: 56px; font-size: 24px; }
+
+        /* Tenant Card */
+        .tenant-card { display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--gray-50); border-radius: var(--radius-sm); transition: var(--transition); }
+        .tenant-card:hover { background: var(--gray-100); }
+        .tenant-info { flex: 1; }
+        .tenant-name { font-weight: 600; color: var(--gray-800); }
+        .tenant-phone { font-size: 13px; color: var(--gray-500); cursor: pointer; }
+        .tenant-phone:hover { color: var(--primary); }
+
+        /* Lease Status Cards */
+        .lease-stats { display: flex; gap: 16px; margin-bottom: 20px; padding: 16px 20px; background: var(--gray-50); border-radius: var(--radius-sm); }
+        .stat-item { font-size: 14px; padding: 8px 16px; border-radius: var(--radius-sm); font-weight: 500; }
+        .stat-pending { background: var(--warning-light); color: var(--warning); }
+        .stat-active { background: #dbeafe; color: var(--primary); }
+        .stat-renewed { background: #e0e7ff; color: #4338ca; }
+        .stat-terminated { background: var(--gray-200); color: var(--gray-600); }
+
+        /* Payment Group */
+        .payment-group { margin-bottom: 24px; border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; }
+        .payment-group-header { background: var(--gray-50); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: var(--transition); }
+        .payment-group-header:hover { background: var(--gray-100); }
+        .payment-group-items { display: none; }
+        .payment-group-items.show { display: block; }
+
+        /* Contract Files */
+        .contract-files { display: flex; flex-wrap: wrap; gap: 8px; }
+        .contract-file-item { padding: 10px 14px; background: var(--gray-100); border-radius: var(--radius-sm); font-size: 14px; display: flex; align-items: center; gap: 8px; }
+
+        /* Image Upload */
+        .image-upload-area { border: 2px dashed var(--gray-300); border-radius: var(--radius); padding: 32px; text-align: center; cursor: pointer; transition: var(--transition); background: var(--gray-50); }
+        .image-upload-area:hover { border-color: var(--primary); background: #eef2ff; }
+        .image-upload-area.dragover { border-color: var(--primary); background: #eef2ff; }
+        .image-preview-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 16px; }
+        .image-preview-item { position: relative; aspect-ratio: 1; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--gray-200); }
+        .image-preview-item img { width: 100%; height: 100%; object-fit: cover; }
+        .image-preview-item .remove-btn { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; background: rgba(0,0,0,0.6); color: white; border: none; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+        .image-preview-item .cover-badge { position: absolute; bottom: 4px; left: 4px; padding: 4px 8px; border-radius: 4px; background: var(--primary); color: white; font-size: 10px; font-weight: 600; }
+        .image-preview-item .set-cover-btn { position: absolute; bottom: 4px; right: 4px; padding: 4px 8px; border-radius: 4px; background: rgba(0,0,0,0.6); color: white; border: none; cursor: pointer; font-size: 10px; }
+
+        /* Image Gallery */
+        .image-gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+        .image-gallery-item { aspect-ratio: 1; border-radius: var(--radius-sm); overflow: hidden; cursor: pointer; }
+        .image-gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+        .image-gallery-item:hover img { transform: scale(1.08); }
+
+        /* Lightbox */
+        .lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
+        .lightbox.show { display: flex; }
+        .lightbox img { max-width: 90%; max-height: 90%; object-fit: contain; }
+        .lightbox .close-btn { position: absolute; top: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; background: white; border: none; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; }
+
+        /* Tags */
+        .tag { display: inline-block; padding: 4px 10px; background: var(--gray-100); border-radius: 4px; font-size: 12px; color: var(--gray-600); margin-right: 6px; margin-bottom: 6px; }
+
+        /* Actions */
+        .actions { display: flex; gap: 8px; }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        .pulse { animation: pulse 2s infinite; }
+
+        /* Page Transition */
+        .page-content { animation: fadeIn 0.3s ease-out; }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar { width: 240px; }
+            .main { margin-left: 240px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .property-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); width: 280px; }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0; }
+            .content { padding: 20px; }
+            .stats-grid { grid-template-columns: 1fr; gap: 16px; }
+            .quick-actions { grid-template-columns: repeat(2, 1fr); }
+            .header h1 { font-size: 20px; }
+            .form-row { grid-template-columns: 1fr; }
+            .detail-grid { grid-template-columns: 1fr; }
+            .mobile-menu-btn { display: flex; }
+        }
+
+        /* Mobile Menu Button */
+        .mobile-menu-btn { display: none; width: 40px; height: 40px; border-radius: var(--radius-sm); border: none; background: var(--gray-100); cursor: pointer; align-items: center; justify-content: center; }
+
+        /* Lease Timeline */
+        .lease-timeline { display: flex; align-items: center; gap: 8px; padding: 16px 0; }
+        .lease-timeline-item { flex: 1; text-align: center; position: relative; }
+        .lease-timeline-item::after { content: ''; position: absolute; top: 10px; right: -50%; width: 100%; height: 2px; background: var(--gray-200); z-index: 0; }
+        .lease-timeline-item:last-child::after { display: none; }
+        .lease-timeline-dot { width: 20px; height: 20px; border-radius: 50%; background: var(--gray-200); margin: 0 auto 8px; position: relative; z-index: 1; }
+        .lease-timeline-item.active .lease-timeline-dot { background: var(--primary); }
+        .lease-timeline-item.completed .lease-timeline-dot { background: var(--success); }
+        .lease-timeline-label { font-size: 11px; color: var(--gray-500); }
+
+        /* Analysis Card */
+        .analysis-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        .analysis-item { text-align: center; padding: 20px; background: var(--gray-50); border-radius: var(--radius-sm); }
+        .analysis-value { font-size: 24px; font-weight: 700; color: var(--gray-800); }
+        .analysis-label { font-size: 12px; color: var(--gray-500); margin-top: 4px; }
+        .analysis-value.positive { color: var(--success); }
+        .analysis-value.negative { color: var(--danger); }
+
+        /* Alert Cards */
+        .alert-card { padding: 16px 20px; border-radius: var(--radius-sm); margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+        .alert-card.info { background: #dbeafe; border-left: 4px solid var(--primary); }
+        .alert-card.warning { background: var(--warning-light); border-left: 4px solid var(--warning); }
+        .alert-card.danger { background: var(--danger-light); border-left: 4px solid var(--danger); }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--gray-100); }
+        ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
+    </style>
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon"><i data-lucide="building-2"></i></div>
+                <span>租金管理</span>
+            </div>
+        </div>
+        <div class="nav-section">概览</div>
+        <div class="nav-item active" data-page="dashboard"><i data-lucide="layout-dashboard"></i>仪表盘</div>
+        <div class="nav-section">核心管理</div>
+        <div class="nav-item" data-page="properties"><i data-lucide="building-2"></i>房产管理</div>
+        <div class="nav-item" data-page="leases"><i data-lucide="file-text"></i>租约管理</div>
+        <div class="nav-item" data-page="tenants"><i data-lucide="users"></i>租客管理</div>
+        <div class="nav-item" data-page="payments"><i data-lucide="credit-card"></i>付款管理</div>
+        <div class="nav-section">分析</div>
+        <div class="nav-item" data-page="analysis"><i data-lucide="bar-chart-3"></i>利润分析</div>
+    </div>
+
+    <div class="main">
+        <div class="header">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
+                <h1 id="pageTitle">仪表盘</h1>
+            </div>
+            <div class="header-time"><i data-lucide="clock"></i><span id="currentTime"></span></div>
+        </div>
+        <div class="content" id="content"></div>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">添加</h2>
+                <button class="close" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <div class="lightbox" id="lightbox">
+        <button class="close-btn" onclick="closeLightbox()">&times;</button>
+        <img id="lightboxImg" src="" alt="">
+    </div>
+
+    <script>
+        const API = window.location.origin;
+        let currentPage = 'dashboard';
+        let pendingImages = [];
+        let editingPropertyId = null;
+
+        function updateTime() {
+            const now = new Date();
+            const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            document.getElementById('currentTime').textContent = now.toLocaleString('zh-CN', options);
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        async function api(url, options = {}) {
+            try {
+                const res = await fetch(API + url, options);
+                const text = await res.text();
+                if (!res.ok) {
+                    console.error('API Error:', res.status, text);
+                    return { error: `请求失败 (${res.status})` };
+                }
+                try {
+                    return JSON.parse(text);
+                } catch {
+                    console.error('JSON parse error:', text);
+                    return { error: '响应格式错误' };
+                }
+            } catch (e) {
+                console.error('Fetch error:', e);
+                return { error: '网络请求失败' };
+            }
+        }
+
+        function navigate(page) {
+            currentPage = page;
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.querySelector(`[data-page="${page}"]`).classList.add('active');
+            document.getElementById('pageTitle').textContent = {
+                dashboard: '仪表盘',
+                properties: '房产管理',
+                leases: '租约管理',
+                tenants: '租客管理',
+                payments: '付款管理',
+                analysis: '利润分析'
+            }[page];
+            loadPage(page);
+            lucide.createIcons();
+        }
+
+        async function loadPage(page) {
+            const content = document.getElementById('content');
+            content.classList.remove('page-content');
+            void content.offsetWidth;
+            content.classList.add('page-content');
+            switch(page) {
+                case 'dashboard': await loadDashboard(); break;
+                case 'properties': await loadProperties(); break;
+                case 'leases': await loadLeases(); break;
+                case 'tenants': await loadTenants(); break;
+                case 'payments': await loadPayments(); break;
+                case 'analysis': await loadAnalysis(); break;
+            }
+            lucide.createIcons();
+        }
+
+        async function loadDashboard() {
+            const [summary, properties, leases, reminders] = await Promise.all([
+                api('/analysis/summary'),
+                api('/properties'),
+                api('/leases'),
+                api('/reminders')
+            ]);
+
+            const leaseStats = { pending: 0, active: 0, renewed: 0, terminated: 0 };
+            (leases || []).forEach(l => { if (leaseStats[l.status] !== undefined) leaseStats[l.status]++; });
+
+            const rentedCount = summary.rented_count || 0;
+            const vacantCount = summary.vacant_count || 0;
+            const totalProperties = summary.total_properties || 0;
+            const occupancyRate = totalProperties > 0 ? Math.round((rentedCount / totalProperties) * 100) : 0;
+
+            document.getElementById('content').innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card primary">
+                        <div class="stat-icon primary"><i data-lucide="building-2"></i></div>
+                        <div class="stat-label">房产总数</div>
+                        <div class="stat-value">${totalProperties}</div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="stat-icon success"><i data-lucide="home"></i></div>
+                        <div class="stat-label">出租率</div>
+                        <div class="stat-value">${occupancyRate}%</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="stat-icon warning"><i data-lucide="door-open"></i></div>
+                        <div class="stat-label">空置房产</div>
+                        <div class="stat-value">${vacantCount}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon primary"><i data-lucide="wallet"></i></div>
+                        <div class="stat-label">月租金收入</div>
+                        <div class="stat-value">¥${(summary.income?.total_monthly_rent || 0).toLocaleString()}</div>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <div class="quick-action" onclick="navigate('properties'); showPropertyModal();">
+                        <div class="quick-action-icon"><i data-lucide="plus-circle"></i></div>
+                        <span class="quick-action-text">添加房产</span>
+                    </div>
+                    <div class="quick-action" onclick="navigate('leases'); showLeaseModal();">
+                        <div class="quick-action-icon"><i data-lucide="file-plus"></i></div>
+                        <span class="quick-action-text">创建租约</span>
+                    </div>
+                    <div class="quick-action" onclick="navigate('tenants'); showTenantModal();">
+                        <div class="quick-action-icon"><i data-lucide="user-plus"></i></div>
+                        <span class="quick-action-text">添加租客</span>
+                    </div>
+                    <div class="quick-action" onclick="navigate('payments');">
+                        <div class="quick-action-icon"><i data-lucide="receipt"></i></div>
+                        <span class="quick-action-text">查看付款</span>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="modern-card">
+                        <div class="card-header">
+                            <h3 class="card-title"><i data-lucide="bell" style="width:18px;height:18px;margin-right:8px;"></i>租金提醒 (30天内)</h3>
+                        </div>
+                        ${(reminders || []).length > 0 ? `
+                            <div class="reminder-list">
+                                ${reminders.map(r => `
+                                    <div class="reminder-item ${r.is_overdue ? 'overdue' : ''}">
+                                        <div class="reminder-info">
+                                            <div class="reminder-property">${r.property_name}</div>
+                                            <div class="reminder-tenant">${r.tenant_name || '待分配'}</div>
+                                        </div>
+                                        <div class="reminder-amount">¥${(r.amount || 0).toLocaleString()}</div>
+                                        <div class="reminder-date ${r.days_until_due <= 7 ? 'urgent' : ''}">
+                                            ${r.is_overdue ? `<span>已逾期</span>` : `${r.days_until_due}天后`}
+                                            <div style="font-size:12px;color:#666;">${r.due_date}</div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <div class="empty-state">
+                                <div class="empty-state-icon"><i data-lucide="check-circle"></i></div>
+                                <div class="empty-state-title">暂无待缴租金</div>
+                                <div class="empty-state-desc">所有租金都已按时缴纳</div>
+                            </div>
+                        `}
+                    </div>
+                    <div class="modern-card">
+                        <div class="card-header">
+                            <h3 class="card-title"><i data-lucide="bar-chart-2" style="width:18px;height:18px;margin-right:8px;"></i>租约概览</h3>
+                        </div>
+                        <div class="lease-overview">
+                            <div class="overview-item">
+                                <span class="overview-label"><span class="badge badge-pending">待生效</span></span>
+                                <span class="overview-value stat-pending">${leaseStats.pending}</span>
+                            </div>
+                            <div class="overview-item">
+                                <span class="overview-label"><span class="badge badge-active">进行中</span></span>
+                                <span class="overview-value stat-active">${leaseStats.active}</span>
+                            </div>
+                            <div class="overview-item">
+                                <span class="overview-label"><span class="badge badge-renewed">已续签</span></span>
+                                <span class="overview-value stat-renewed">${leaseStats.renewed}</span>
+                            </div>
+                            <div class="overview-item">
+                                <span class="overview-label"><span class="badge badge-terminated">已终止</span></span>
+                                <span class="overview-value stat-terminated">${leaseStats.terminated}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modern-card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i data-lucide="building" style="width:18px;height:18px;margin-right:8px;"></i>房产列表</h3>
+                        <button class="btn btn-primary btn-sm" onclick="navigate('properties')">查看全部</button>
+                    </div>
+                    ${(properties || []).length > 0 ? `
+                        <div class="property-grid">
+                            ${(properties || []).slice(0, 4).map(p => {
+                                const images = p.images || [];
+                                const thumb = images.length > 0 ? images[0].thumbnail : null;
+                                return `
+                                    <div class="property-card" onclick="viewProperty(${p.id})">
+                                        <div class="property-card-img">
+                                            ${thumb ? `<img src="${API}${thumb}" alt="${p.name}">` : '<div style="width:100%;height:100%;background:var(--gray-200);display:flex;align-items:center;justify-content:center;"><i data-lucide="building-2" style="width:48px;height:48px;color:var(--gray-400);"></i></div>'}
+                                        </div>
+                                        <div class="property-card-body">
+                                            <div class="property-card-name">${p.name}</div>
+                                            <div class="property-card-address"><i data-lucide="map-pin" style="width:14px;height:14px;"></i>${p.address}</div>
+                                            <div class="property-card-footer">
+                                                <span class="property-card-price">¥${(p.rent_guide || 0).toLocaleString()}/月</span>
+                                                <span class="badge ${p.status === '出租中' ? 'badge-rented' : 'badge-vacant'}">${p.status}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    ` : `
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i data-lucide="building-2"></i></div>
+                            <div class="empty-state-title">暂无房产</div>
+                            <div class="empty-state-desc">点击上方按钮添加第一个房产</div>
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+
+        async function loadProperties() {
+            const data = await api('/properties');
+            const filterStatus = window.propertyFilter || '';
+            const filteredData = filterStatus ? (data || []).filter(p => p.status === filterStatus) : (data || []);
+
+            document.getElementById('content').innerHTML = `
+                <div class="filter-bar">
+                    <button class="btn btn-primary" onclick="showPropertyModal()"><i data-lucide="plus-circle" style="width:16px;height:16px;"></i> 添加房产</button>
+                    <div style="flex:1;"></div>
+                    <div style="display:flex;gap:8px;">
+                        <span class="filter-tag ${!filterStatus ? 'active' : ''}" onclick="filterProperties('')">全部</span>
+                        <span class="filter-tag ${filterStatus === '出租中' ? 'active' : ''}" onclick="filterProperties('出租中')">出租中</span>
+                        <span class="filter-tag ${filterStatus === '空置' ? 'active' : ''}" onclick="filterProperties('空置')">空置</span>
+                    </div>
+                </div>
+                <div class="modern-card">
+                    ${filteredData.length > 0 ? `
+                        <table>
+                            <thead><tr><th style="width:80px;">图片</th><th>名称</th><th>地址</th><th>面积</th><th>指导租金</th><th>状态</th><th style="width:200px;">操作</th></tr></thead>
+                            <tbody>
+                                ${filteredData.map(p => {
+                                    const images = p.images || [];
+                                    const thumb = images.length > 0 ? images[0].thumbnail : null;
+                                    return `
+                                        <tr>
+                                            <td>${thumb ? `<img src="${API}${thumb}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">` : '<span style="color:var(--gray-400);"><i data-lucide="building-2" style="width:24px;height:24px;"></i></span>'}</td>
+                                            <td><strong>${p.name}</strong></td>
+                                            <td style="color:var(--gray-600);">${p.address}</td>
+                                            <td>${p.area ? p.area + '㎡' : '-'}</td>
+                                            <td style="color:var(--success);font-weight:600;">${p.rent_guide ? '¥' + p.rent_guide.toLocaleString() : '-'}</td>
+                                            <td><span class="badge ${p.status === '出租中' ? 'badge-rented' : 'badge-vacant'}">${p.status}</span></td>
+                                            <td class="actions">
+                                                <button class="btn-icon" onclick="viewProperty(${p.id})" title="查看"><i data-lucide="eye" style="width:16px;height:16px;"></i></button>
+                                                <button class="btn-icon" onclick="editProperty(${p.id})" title="编辑"><i data-lucide="pencil" style="width:16px;height:16px;"></i></button>
+                                                <button class="btn-icon" onclick="deleteProperty(${p.id})" title="删除" style="color:var(--danger);"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    ` : `
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i data-lucide="building-2"></i></div>
+                            <div class="empty-state-title">${filterStatus ? '没有' + filterStatus + '的房产' : '暂无房产'}</div>
+                            <div class="empty-state-desc">${filterStatus ? '试试其他筛选条件' : '点击上方按钮添加第一个房产'}</div>
+                            ${!filterStatus ? `<button class="btn btn-primary" onclick="showPropertyModal()"><i data-lucide="plus-circle" style="width:16px;height:16px;"></i> 添加房产</button>` : ''}
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+
+        function filterProperties(status) {
+            window.propertyFilter = status;
+            loadProperties();
+            lucide.createIcons();
+        }
+
+        function showPropertyModal() {
+            pendingImages = [];
+            showModal('添加房产', `
+                <form onsubmit="addProperty(event)">
+                    <div class="form-row">
+                        <div class="form-group"><label>名称 *</label><input name="name" required placeholder="如：阳光小区A栋"></div>
+                        <div class="form-group"><label>地址 *</label><input name="address" required placeholder="如：朝阳区建国路88号"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>面积 (㎡)</label><input name="area" type="number" placeholder="建筑面积"></div>
+                        <div class="form-group"><label>类型</label>
+                            <select name="property_type">
+                                <option value="">请选择</option>
+                                <option value="住宅">住宅</option>
+                                <option value="商铺">商铺</option>
+                                <option value="公寓">公寓</option>
+                                <option value="别墅">别墅</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group"><label>装修</label>
+                        <select name="decoration">
+                            <option value="">请选择</option>
+                            <option value="毛坯">毛坯</option>
+                            <option value="简装">简装</option>
+                            <option value="精装">精装</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>家具家电</label>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                            ${['床', '空调', '冰箱', '洗衣机', '电视', '沙发', '热水器', '油烟机'].map(f => `
+                                <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;background:var(--gray-100);border-radius:20px;cursor:pointer;transition:var(--transition);">
+                                    <input type="checkbox" name="furniture" value="${f}" style="width:auto;"> ${f}
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>指导租金</label><input name="rent_guide" type="number" step="0.01" placeholder="月租金指导价"></div>
+                        <div class="form-group"><label>月物业费</label><input name="property_fee" type="number" step="0.01" placeholder="每月物业费"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>购买日期</label><input name="purchase_date" type="date"></div>
+                        <div class="form-group"><label>购买价格</label><input name="purchase_price" type="number" step="0.01" placeholder="购房总价"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>贷款金额</label><input name="loan_amount" type="number" step="0.01" placeholder="剩余贷款"></div>
+                        <div class="form-group"><label>贷款利率</label><input name="loan_rate" type="number" step="0.0001" placeholder="如 0.05 表示 5%"></div>
+                    </div>
+                    <div class="form-group"><label>备注</label><textarea name="remark" rows="2" placeholder="其他备注信息"></textarea></div>
+                    <div class="form-group">
+                        <label>房产图片 (最多10张)</label>
+                        <div class="image-upload-area" id="uploadArea">
+                            <i data-lucide="upload" style="width:32px;height:32px;color:var(--gray-400);margin-bottom:8px;"></i>
+                            <div>点击或拖拽上传图片</div>
+                            <div style="font-size:12px;color:var(--gray-500);margin-top:4px;">支持 JPG/PNG/GIF/WebP</div>
+                        </div>
+                        <input type="file" id="fileInput" accept="image/*" multiple style="display:none;">
+                        <div id="imagePreviewContainer" class="image-preview-grid"></div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                        <button type="submit" class="btn btn-primary"><i data-lucide="plus-circle" style="width:16px;height:16px;"></i> 添加</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        async function addProperty(e) {
+            e.preventDefault();
+            const form = e.target;
+            const furnitureEls = form.querySelectorAll('input[name="furniture"]:checked');
+            const furniture = Array.from(furnitureEls).map(el => el.value).join(',');
+            const images = pendingImages.map(img => ({ image: img.image, thumbnail: img.thumbnail }));
+
+            const data = {
+                name: form.name.value,
+                address: form.address.value,
+                area: form.area.value ? parseFloat(form.area.value) : null,
+                property_type: form.property_type.value || null,
+                decoration: form.decoration.value || null,
+                furniture: furniture || null,
+                rent_guide: form.rent_guide.value ? parseFloat(form.rent_guide.value) : null,
+                property_fee: form.property_fee.value ? parseFloat(form.property_fee.value) : null,
+                purchase_date: form.purchase_date.value || null,
+                purchase_price: form.purchase_price.value ? parseFloat(form.purchase_price.value) : null,
+                loan_amount: form.loan_amount.value ? parseFloat(form.loan_amount.value) : null,
+                loan_rate: form.loan_rate.value ? parseFloat(form.loan_rate.value) : null,
+                remark: form.remark.value,
+                images: images
+            };
+
+            const result = await api('/properties', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (result.error) return alert(result.error);
+            closeModal();
+            loadProperties();
+        }
+
+        async function viewProperty(id) {
+            const p = await api(`/properties/${id}`);
+            if (p.error) return alert(p.error);
+
+            const analysis = await api(`/analysis/property/${id}`);
+            const images = p.images || [];
+
+            showModal('房产详情', `
+                ${images.length > 0 ? `
+                    <div class="image-gallery">
+                        ${images.map((img, idx) => `
+                            <div class="image-gallery-item" onclick="openLightbox('${img.image}')">
+                                <img src="${API}${img.thumbnail}" alt="图片${idx + 1}">
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+                <div class="detail-grid" style="${images.length > 0 ? 'margin-top:16px;' : ''}">
+                    <div class="detail-item"><div class="detail-label">名称</div><div class="detail-value">${p.name}</div></div>
+                    <div class="detail-item"><div class="detail-label">状态</div><div class="detail-value"><span class="badge ${p.status === '出租中' ? 'badge-rented' : 'badge-vacant'}">${p.status}</span></div></div>
+                    <div class="detail-item"><div class="detail-label">地址</div><div class="detail-value">${p.address}</div></div>
+                    <div class="detail-item"><div class="detail-label">面积</div><div class="detail-value">${p.area ? p.area + '㎡' : '-'}</div></div>
+                    <div class="detail-item"><div class="detail-label">类型</div><div class="detail-value">${p.property_type || '-'}</div></div>
+                    <div class="detail-item"><div class="detail-label">装修</div><div class="detail-value">${p.decoration || '-'}</div></div>
+                    <div class="detail-item"><div class="detail-label">指导租金</div><div class="detail-value" style="color:var(--success);">${p.rent_guide ? '¥' + p.rent_guide.toLocaleString() + '/月' : '-'}</div></div>
+                    <div class="detail-item"><div class="detail-label">月物业费</div><div class="detail-value">${p.property_fee ? '¥' + p.property_fee.toLocaleString() : '-'}</div></div>
+                    <div class="detail-item"><div class="detail-label">购买日期</div><div class="detail-value">${p.purchase_date || '-'}</div></div>
+                    <div class="detail-item"><div class="detail-label">购买价格</div><div class="detail-value">${p.purchase_price ? '¥' + p.purchase_price.toLocaleString() : '-'}</div></div>
+                    <div class="detail-item"><div class="detail-label">贷款金额</div><div class="detail-value">${p.loan_amount ? '¥' + p.loan_amount.toLocaleString() : '-'}</div></div>
+                    <div class="detail-item"><div class="detail-label">贷款利率</div><div class="detail-value">${p.loan_rate ? (p.loan_rate * 100).toFixed(2) + '%' : '-'}</div></div>
+                </div>
+                ${p.furniture ? `<div style="margin-top:16px;"><div class="detail-label">家具家电</div><div style="margin-top:8px;">${p.furniture.split(',').map(f => `<span class="tag">${f.trim()}</span>`).join('')}</div></div>` : ''}
+                ${p.remark ? `<div style="margin-top:16px;"><div class="detail-label">备注</div><div class="detail-value" style="white-space:pre-wrap;margin-top:4px;">${p.remark}</div></div>` : ''}
+
+                ${analysis && !analysis.error ? `
+                    <div style="margin-top:24px;padding-top:24px;border-top:1px solid var(--gray-200);">
+                        <h4 style="margin-bottom:16px;display:flex;align-items:center;gap:8px;"><i data-lucide="bar-chart-2" style="width:18px;height:18px;"></i>收益分析</h4>
+                        <div class="analysis-grid">
+                            <div class="analysis-item">
+                                <div class="analysis-value">¥${analysis.income?.monthly_rent?.toLocaleString() || 0}</div>
+                                <div class="analysis-label">月租金</div>
+                            </div>
+                            <div class="analysis-item">
+                                <div class="analysis-value">¥${analysis.income?.annual_rent?.toLocaleString() || 0}</div>
+                                <div class="analysis-label">年租金</div>
+                            </div>
+                            <div class="analysis-item">
+                                <div class="analysis-value">¥${analysis.costs?.loan_cost?.toLocaleString() || 0}</div>
+                                <div class="analysis-label">年还贷</div>
+                            </div>
+                            <div class="analysis-item">
+                                <div class="analysis-value ${(analysis.profit || 0) >= 0 ? 'positive' : 'negative'}">¥${(analysis.profit || 0).toLocaleString()}</div>
+                                <div class="analysis-label">年度利润</div>
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+
+                <div class="form-actions">
+                    <button class="btn btn-secondary" onclick="closeModal()">关闭</button>
+                    <button class="btn btn-primary" onclick="closeModal(); editProperty(${id});"><i data-lucide="pencil" style="width:16px;height:16px;"></i> 编辑</button>
+                </div>
+            `);
+        }
+
+        async function editProperty(id) {
+            const p = await api(`/properties/${id}`);
+            if (p.error) return alert(p.error);
+
+            editingPropertyId = id;
+            pendingImages = p.images || [];
+
+            showModal('编辑房产', `
+                <form onsubmit="saveProperty(event, ${id})">
+                    <div class="form-row">
+                        <div class="form-group"><label>名称 *</label><input name="name" value="${p.name}" required></div>
+                        <div class="form-group"><label>地址 *</label><input name="address" value="${p.address}" required></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>面积 (㎡)</label><input name="area" type="number" value="${p.area || ''}"></div>
+                        <div class="form-group"><label>类型</label>
+                            <select name="property_type">
+                                <option value="">请选择</option>
+                                <option value="住宅" ${p.property_type === '住宅' ? 'selected' : ''}>住宅</option>
+                                <option value="商铺" ${p.property_type === '商铺' ? 'selected' : ''}>商铺</option>
+                                <option value="公寓" ${p.property_type === '公寓' ? 'selected' : ''}>公寓</option>
+                                <option value="别墅" ${p.property_type === '别墅' ? 'selected' : ''}>别墅</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group"><label>装修</label>
+                        <select name="decoration">
+                            <option value="">请选择</option>
+                            <option value="毛坯" ${p.decoration === '毛坯' ? 'selected' : ''}>毛坯</option>
+                            <option value="简装" ${p.decoration === '简装' ? 'selected' : ''}>简装</option>
+                            <option value="精装" ${p.decoration === '精装' ? 'selected' : ''}>精装</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>家具家电</label>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                            ${['床', '空调', '冰箱', '洗衣机', '电视', '沙发', '热水器', '油烟机'].map(f => `
+                                <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;background:var(--gray-100);border-radius:20px;cursor:pointer;">
+                                    <input type="checkbox" name="furniture" value="${f}" ${p.furniture && p.furniture.includes(f) ? 'checked' : ''} style="width:auto;"> ${f}
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>指导租金</label><input name="rent_guide" type="number" step="0.01" value="${p.rent_guide || ''}"></div>
+                        <div class="form-group"><label>月物业费</label><input name="property_fee" type="number" step="0.01" value="${p.property_fee || ''}"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>购买日期</label><input name="purchase_date" type="date" value="${p.purchase_date || ''}"></div>
+                        <div class="form-group"><label>购买价格</label><input name="purchase_price" type="number" step="0.01" value="${p.purchase_price || ''}"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>贷款金额</label><input name="loan_amount" type="number" step="0.01" value="${p.loan_amount || ''}"></div>
+                        <div class="form-group"><label>贷款利率</label><input name="loan_rate" type="number" step="0.0001" value="${p.loan_rate || ''}"></div>
+                    </div>
+                    <div class="form-group"><label>备注</label><textarea name="remark" rows="2">${p.remark || ''}</textarea></div>
+                    <div class="form-group">
+                        <label>房产图片 (最多10张)</label>
+                        <div class="image-upload-area" id="uploadArea">
+                            <i data-lucide="upload" style="width:32px;height:32px;color:var(--gray-400);margin-bottom:8px;"></i>
+                            <div>点击或拖拽上传图片</div>
+                            <div style="font-size:12px;color:var(--gray-500);margin-top:4px;">支持 JPG/PNG/GIF/WebP</div>
+                        </div>
+                        <input type="file" id="fileInput" accept="image/*" multiple style="display:none;">
+                        <div id="imagePreviewContainer" class="image-preview-grid"></div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                        <button type="submit" class="btn btn-primary"><i data-lucide="save" style="width:16px;height:16px;"></i> 保存</button>
+                    </div>
+                </form>
+            `);
+            renderImagePreviews();
+        }
+
+        async function saveProperty(e, id) {
+            e.preventDefault();
+            const form = e.target;
+            const furnitureEls = form.querySelectorAll('input[name="furniture"]:checked');
+            const furniture = Array.from(furnitureEls).map(el => el.value).join(',');
+            const images = pendingImages.map(img => ({ image: img.image, thumbnail: img.thumbnail }));
+
+            const data = {
+                name: form.name.value,
+                address: form.address.value,
+                area: form.area.value ? parseFloat(form.area.value) : null,
+                property_type: form.property_type.value || null,
+                decoration: form.decoration.value || null,
+                furniture: furniture || null,
+                rent_guide: form.rent_guide.value ? parseFloat(form.rent_guide.value) : null,
+                property_fee: form.property_fee.value ? parseFloat(form.property_fee.value) : null,
+                purchase_date: form.purchase_date.value || null,
+                purchase_price: form.purchase_price.value ? parseFloat(form.purchase_price.value) : null,
+                loan_amount: form.loan_amount.value ? parseFloat(form.loan_amount.value) : null,
+                loan_rate: form.loan_rate.value ? parseFloat(form.loan_rate.value) : null,
+                remark: form.remark.value,
+                images: images
+            };
+
+            const result = await api(`/properties/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (result.error) return alert(result.error);
+            closeModal();
+            loadProperties();
+        }
+
+        async function deleteProperty(id) {
+            if (!confirm('确定要删除这个房产吗？此操作不可撤销。')) return;
+            const result = await api(`/properties/${id}`, { method: 'DELETE' });
+            if (result.error) return alert(result.error);
+            loadProperties();
+        }
+
+        async function loadLeases() {
+            const [leases, properties, tenants] = await Promise.all([
+                api('/leases'),
+                api('/properties'),
+                api('/tenants')
+            ]);
+
+            const propMap = {};
+            (properties || []).forEach(p => propMap[p.id] = p.name);
+            const tenantMap = {};
+            (tenants || []).forEach(t => tenantMap[t.id] = t.name);
+
+            const stats = { pending: 0, active: 0, renewed: 0, terminated: 0 };
+            (leases || []).forEach(l => { if (stats[l.status] !== undefined) stats[l.status]++; });
+
+            document.getElementById('content').innerHTML = `
+                <div class="filter-bar">
+                    <button class="btn btn-primary" onclick="showLeaseModal()"><i data-lucide="plus-circle" style="width:16px;height:16px;"></i> 创建租约</button>
+                </div>
+                <div class="modern-card">
+                    <div class="lease-stats">
+                        <span class="stat-item stat-pending"><i data-lucide="clock" style="width:14px;height:14px;margin-right:4px;"></i>待生效: ${stats.pending}</span>
+                        <span class="stat-item stat-active"><i data-lucide="check-circle" style="width:14px;height:14px;margin-right:4px;"></i>进行中: ${stats.active}</span>
+                        <span class="stat-item stat-renewed"><i data-lucide="refresh-cw" style="width:14px;height:14px;margin-right:4px;"></i>已续签: ${stats.renewed}</span>
+                        <span class="stat-item stat-terminated"><i data-lucide="x-circle" style="width:14px;height:14px;margin-right:4px;"></i>已终止: ${stats.terminated}</span>
+                    </div>
+                    ${(leases || []).length > 0 ? `
+                        <table>
+                            <thead><tr><th>租约名称</th><th>房产</th><th>租客</th><th>租金</th><th>租期</th><th>状态</th><th style="width:280px;">操作</th></tr></thead>
+                            <tbody>
+                                ${leases.map(l => `
+                                    <tr>
+                                        <td><strong>${l.name || '租约 #' + l.id}</strong></td>
+                                        <td>${propMap[l.property_id] || '-'}</td>
+                                        <td>${tenantMap[l.tenant_id] || '待分配'}</td>
+                                        <td style="color:var(--success);font-weight:600;">¥${l.rent_amount}/月</td>
+                                        <td>${l.start_date} ~ ${l.end_date}</td>
+                                        <td><span class="badge badge-${l.status}">${l.status_text}</span></td>
+                                        <td class="actions">
+                                            <button class="btn btn-secondary btn-sm" onclick="viewLease(${l.id})"><i data-lucide="eye" style="width:14px;height:14px;"></i> 查看</button>
+                                            ${l.status === 'pending' ? `<button class="btn btn-primary btn-sm" onclick="activateLease(${l.id})"><i data-lucide="check-circle" style="width:14px;height:14px;"></i> 生效</button>` : ''}
+                                            ${l.status === 'active' ? `<button class="btn btn-secondary btn-sm" onclick="showAmendLeaseModal(${l.id})"><i data-lucide="edit" style="width:14px;height:14px;"></i> 变更</button>` : ''}
+                                            ${l.status === 'active' ? `<button class="btn btn-secondary btn-sm" onclick="showRenewLeaseModal(${l.id})"><i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> 续签</button>` : ''}
+                                            ${l.status === 'active' ? `<button class="btn btn-danger btn-sm" onclick="showTerminateLeaseModal(${l.id})"><i data-lucide="x-circle" style="width:14px;height:14px;"></i> 终止</button>` : ''}
+                                            ${l.status === 'pending' ? `<button class="btn btn-danger btn-sm" onclick="deleteLease(${l.id})"><i data-lucide="trash-2" style="width:14px;height:14px;"></i> 删除</button>` : ''}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    ` : `
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i data-lucide="file-text"></i></div>
+                            <div class="empty-state-title">暂无租约</div>
+                            <div class="empty-state-desc">点击上方按钮创建第一个租约</div>
+                            <button class="btn btn-primary" onclick="showLeaseModal()"><i data-lucide="plus-circle" style="width:16px;height:16px;"></i> 创建租约</button>
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+
+        async function showLeaseModal() {
+            const [properties, tenants] = await Promise.all([api('/properties'), api('/tenants')]);
+            const vacantProperties = (properties || []).filter(p => p.status === '空置');
+
+            showModal('创建租约', `
+                <form onsubmit="addLease(event)">
+                    <div class="form-group"><label>租约名称</label><input name="name" placeholder="如：2024年租约"></div>
+                    <div class="form-group"><label>选择房产 *</label>
+                        <select name="property_id" required onchange="onPropertySelect(this.value)">
+                            <option value="">请选择房产</option>
+                            ${vacantProperties.map(p => `<option value="${p.id}">${p.name} (${p.address})</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>选择租客</label>
+                        <select name="tenant_id" id="tenantSelect" onchange="onTenantSelect(this.value)">
+                            <option value="">请选择租客</option>
+                            ${(tenants || []).map(t => `<option value="${t.id}">${t.name} (${t.phone})</option>`).join('')}
+                        </select>
+                        <div id="tenantLeaseWarning" style="color:var(--warning);font-size:12px;margin-top:4px;display:none;"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>每期租金 *</label><input name="rent_amount" type="number" step="0.01" required placeholder="根据支付周期收取"></div>
+                        <div class="form-group"><label>支付周期 *</label>
+                            <select name="payment_cycle" required>
+                                <option value="1">月付(每月)</option>
+                                <option value="3">季付(每3个月)</option>
+                                <option value="6">半年付(每6个月)</option>
+                                <option value="12">年付(每12个月)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group"><label>押金</label><input name="deposit" type="number" step="0.01" placeholder="押金金额"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>租期开始 *</label><input name="start_date" type="date" required></div>
+                        <div class="form-group"><label>租期结束 *</label><input name="end_date" type="date" required></div>
+                    </div>
+                    <div style="font-size:12px;color:var(--gray-500);margin-top:8px;"><i data-lucide="info" style="width:12px;height:12px;margin-right:4px;"></i>付款日根据租期开始日期自动计算</div>
+                    <div class="form-group"><label>备注</label><textarea name="remark" rows="2" placeholder="其他备注信息"></textarea></div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                        <button type="button" class="btn btn-secondary" onclick="addLease(event, true)">保存并生效</button>
+                        <button type="submit" class="btn btn-primary"><i data-lucide="save" style="width:16px;height:16px;"></i> 保存草稿</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        async function onTenantSelect(tenantId) {
+            const warningEl = document.getElementById('tenantLeaseWarning');
+            if (!tenantId) {
+                warningEl.style.display = 'none';
+                return;
+            }
+            const status = await api(`/tenants/${tenantId}/lease_status`);
+            if (status.has_active_lease) {
+                warningEl.textContent = '⚠️ ' + status.message;
+                warningEl.style.display = 'block';
+            } else {
+                warningEl.style.display = 'none';
+            }
+        }
+
+        async function onPropertySelect(propertyId) {
+            if (!propertyId) return;
+            const p = await api(`/properties/${propertyId}`);
+            if (p && p.rent_guide) {
+                const rentInput = document.querySelector('input[name="rent_amount"]');
+                if (!rentInput.value) rentInput.value = p.rent_guide;
+            }
+        }
+
+        async function addLease(e, activateNow = false) {
+            e.preventDefault();
+            const form = e.target.closest('form') || e.target.form;
+            if (!form) {
+                alert('表单错误');
+                return;
+            }
+            const data = {
+                name: form.name.value,
+                property_id: parseInt(form.property_id.value),
+                tenant_id: form.tenant_id.value ? parseInt(form.tenant_id.value) : null,
+                rent_amount: parseFloat(form.rent_amount.value),
+                payment_cycle: parseInt(form.payment_cycle.value) || 1,
+                deposit: form.deposit.value ? parseFloat(form.deposit.value) : 0,
+                start_date: form.start_date.value,
+                end_date: form.end_date.value,
+                remark: form.remark.value,
+                activate_now: activateNow
+            };
+
+            const result = await api('/leases', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (result.error) return alert(result.error);
+            closeModal();
+            loadLeases();
+        }
+
+        async function activateLease(id) {
+            if (!confirm('确认使该租约生效？\n\n注意：\n1. 房产和租客都必须已选择\n2. 生效后将自动生成全部付款计划')) return;
+            const result = await api(`/leases/${id}/activate`, { method: 'POST' });
+            if (result.error) return alert(result.error);
+            loadLeases();
+        }
+
+        async function viewLease(id) {
+            const l = await api(`/leases/${id}`);
+            if (l.error) return alert(l.error);
+
+            const payments = await api(`/payments?lease_id=${id}`);
+            const cycleMap = {1: '月付', 3: '季付', 6: '半年付', 12: '年付'};
+
+            const paymentCycle = l.payment_cycle || 1;
+            const startDate = new Date(l.start_date);
+            const endDate = new Date(l.end_date);
+            const now = new Date();
+            const totalDays = (endDate - startDate) / (1000 * 60 * 60 * 24);
+            const elapsedDays = Math.max(0, Math.min((now - startDate) / (1000 * 60 * 60 * 24), totalDays));
+            const progress = Math.round((elapsedDays / totalDays) * 100);
+
+            showModal('租约详情', `
+                <div class="detail-grid">
+                    <div class="detail-item"><div class="detail-label">租约名称</div><div class="detail-value">${l.name || '租约 #' + l.id}</div></div>
+                    <div class="detail-item"><div class="detail-label">状态</div><div class="detail-value"><span class="badge badge-${l.status}">${l.status_text}</span></div></div>
+                    <div class="detail-item"><div class="detail-label">房产</div><div class="detail-value">${l.property_name}</div></div>
+                    <div class="detail-item"><div class="detail-label">租客</div><div class="detail-value">${l.tenant_name || '待分配'}</div></div>
+                    <div class="detail-item"><div class="detail-label">支付周期</div><div class="detail-value">${cycleMap[l.payment_cycle] || '月付'}</div></div>
+                    <div class="detail-item"><div class="detail-label">每期租金</div><div class="detail-value" style="color:var(--success);font-weight:600;">¥${l.rent_amount}</div></div>
+                    <div class="detail-item"><div class="detail-label">押金</div><div class="detail-value">¥${l.deposit || 0}</div></div>
+                    <div class="detail-item"><div class="detail-label">租期</div><div class="detail-value">${l.start_date} ~ ${l.end_date}</div></div>
+                </div>
+
+                <div style="margin-top:20px;padding:20px;background:var(--gray-50);border-radius:var(--radius-sm);">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;color:var(--gray-600);">
+                        <span>租期进度</span>
+                        <span>${progress}%</span>
+                    </div>
+                    <div style="height:8px;background:var(--gray-200);border-radius:4px;overflow:hidden;">
+                        <div style="height:100%;width:${progress}%;background:linear-gradient(90deg,var(--primary),var(--primary-light));border-radius:4px;transition:width 0.5s;"></div>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:var(--gray-500);">
+                        <span>${l.start_date}</span>
+                        <span>${l.end_date}</span>
+                    </div>
+                </div>
+
+                <div style="margin-top:20px;">
+                    <h4 style="margin-bottom:12px;display:flex;align-items:center;gap:8px;"><i data-lucide="credit-card" style="width:18px;height:18px;"></i>付款计划</h4>
+                    ${payments && payments.length > 0 ? `
+                        <table style="font-size:13px;">
+                            <thead><tr><th>期数</th><th>到期日</th><th>覆盖周期</th><th>金额</th><th>状态</th><th>操作</th></tr></thead>
+                            <tbody>
+                                ${payments.map((p, idx) => {
+                                    const dueDate = new Date(p.due_date);
+                                    const periodStart = new Date(dueDate);
+                                    periodStart.setMonth(periodStart.getMonth() - paymentCycle);
+                                    const periodEnd = new Date(dueDate);
+                                    periodEnd.setDate(periodEnd.getDate() - 1);
+                                    const statusBadge = p.current_status === 'overdue' ? '<span class="badge badge-overdue">逾期</span>' : p.current_status === 'paid' ? '<span class="badge badge-paid">已缴纳</span>' : '<span class="badge badge-pending">未到期</span>';
+                                    return `<tr ${p.current_status === 'overdue' ? 'style="background:var(--danger-light);"' : ''}>
+                                        <td>第${idx + 1}期</td>
+                                        <td>${p.due_date}</td>
+                                        <td>${formatDate(periodStart)} ~ ${formatDate(periodEnd)}</td>
+                                        <td style="color:var(--success);font-weight:600;">¥${p.amount}</td>
+                                        <td>${statusBadge}</td>
+                                        <td>${p.current_status !== 'paid' ? `<button class="btn btn-success btn-sm" onclick="markPaid(${p.id});viewLease(${id});"><i data-lucide="check-circle" style="width:14px;height:14px;"></i> 确认收款</button>` : '-'}</td>
+                                    </tr>`;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    ` : `<div style="color:var(--gray-500);font-size:13px;padding:20px;text-align:center;background:var(--gray-50);border-radius:var(--radius-sm);">暂无付款记录${l.status === "pending" ? "（租约未生效）" : ""}</div>`}
+                </div>
+                ${l.termination_reason ? `<div class="detail-grid" style="margin-top:20px;"><div class="detail-item"><div class="detail-label">终止原因</div><div class="detail-value">${l.termination_reason}</div></div><div class="detail-item"><div class="detail-label">终止日期</div><div class="detail-value">${l.termination_date}</div></div></div>` : ''}
+                <div style="margin-top:20px;">
+                    <h4 style="margin-bottom:12px;display:flex;align-items:center;gap:8px;"><i data-lucide="file-text" style="width:18px;height:18px;"></i>合同文件</h4>
+                    <div class="contract-upload-area" id="contractUploadArea">
+                        <input type="file" id="contractFileInput" accept=".pdf,.jpg,.jpeg,.png,.gif" style="display:none;" onchange="uploadContract(this, ${l.id})">
+                        <button class="btn btn-secondary" onclick="document.getElementById('contractFileInput').click()"><i data-lucide="upload" style="width:16px;height:16px;"></i> 上传合同</button>
+                        <span style="color:var(--gray-500);font-size:12px;margin-left:8px;">支持 PDF、图片格式，最大20MB</span>
+                    </div>
+                    ${l.contract_files && l.contract_files.length > 0 ? `
+                        <div class="contract-files" style="margin-top:12px;">
+                            ${l.contract_files.map(f => `<div class="contract-file-item">
+                                <i data-lucide="file" style="width:16px;height:16px;"></i>
+                                <a href="/contracts/${l.id}/${f.filename}" target="_blank" style="color:var(--primary);text-decoration:none;">${f.original_name}</a>
+                                <button class="btn btn-danger btn-sm" style="margin-left:8px;padding:4px 8px;" onclick="deleteContract(${l.id}, ${f.id})"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
+                            </div>`).join('')}
+                        </div>
+                    ` : '<div style="color:var(--gray-500);font-size:13px;margin-top:8px;">暂无合同文件</div>'}
+                </div>
+                <div class="form-actions" style="margin-top:20px;">
+                    <button class="btn btn-secondary" onclick="closeModal()">关闭</button>
+                </div>
+            `);
+        }
+
+        async function uploadContract(input, leaseId) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch(API + `/leases/${leaseId}/contracts`, { method: 'POST', body: formData });
+                const text = await res.text();
+                let result;
+                try { result = JSON.parse(text); } catch { alert('上传失败：响应格式错误'); return; }
+                if (result.error) { alert(result.error); return; }
+                viewLease(leaseId);
+            } catch (e) { console.error(e); alert('上传失败'); }
+        }
+
+        async function deleteContract(leaseId, fileId) {
+            if (!confirm('确定要删除这个合同文件吗？')) return;
+            const result = await api(`/contracts/${leaseId}/${fileId}`, { method: 'DELETE' });
+            if (result.error) return alert(result.error);
+            viewLease(leaseId);
+        }
+
+        async function showRenewLeaseModal(id) {
+            const l = await api(`/leases/${id}`);
+            if (l.error) return alert(l.error);
+
+            const nextYear = new Date(l.end_date).getFullYear() + 1;
+            const newStartDate = l.end_date;
+
+            showModal('续签租约', `
+                <form onsubmit="renewLease(event, ${id})">
+                    <div class="form-group"><label>新租约名称</label><input name="name" value="${l.name}-续签" placeholder="续签租约名称"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>新租期开始 *</label><input name="start_date" type="date" value="${newStartDate}" required></div>
+                        <div class="form-group"><label>新租期结束 *</label><input name="end_date" type="date" value="${nextYear}-${l.end_date.split('-')[1]}-${l.end_date.split('-')[2]}" required></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>每期租金</label><input name="rent_amount" type="number" step="0.01" value="${l.rent_amount}"></div>
+                        <div class="form-group"><label>支付周期</label>
+                            <select name="payment_cycle">
+                                <option value="1" ${l.payment_cycle == 1 ? 'selected' : ''}>月付</option>
+                                <option value="3" ${l.payment_cycle == 3 ? 'selected' : ''}>季付</option>
+                                <option value="6" ${l.payment_cycle == 6 ? 'selected' : ''}>半年付</option>
+                                <option value="12" ${l.payment_cycle == 12 ? 'selected' : ''}>年付</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group"><label>押金</label><input name="deposit" type="number" step="0.01" value="${l.deposit || 0}"></div>
+                    <div class="form-group"><label>备注</label><textarea name="remark" rows="2">${l.remark || ''}</textarea></div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                        <button type="button" class="btn btn-secondary" onclick="renewLease(event, ${id}, true)">保存并生效</button>
+                        <button type="submit" class="btn btn-primary"><i data-lucide="save" style="width:16px;height:16px;"></i> 保存草稿</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        async function renewLease(e, id, activateNow = false) {
+            e.preventDefault();
+            const form = e.target;
+            const data = {
+                name: form.name.value,
+                start_date: form.start_date.value,
+                end_date: form.end_date.value,
+                rent_amount: parseFloat(form.rent_amount.value),
+                payment_cycle: parseInt(form.payment_cycle.value) || 1,
+                deposit: parseFloat(form.deposit.value) || 0,
+                remark: form.remark.value,
+                activate_now: activateNow
+            };
+
+            const result = await api(`/leases/${id}/renew`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (result.error) return alert(result.error);
+            closeModal();
+            loadLeases();
+        }
+
+        async function showAmendLeaseModal(id) {
+            const l = await api(`/leases/${id}`);
+            if (l.error) return alert(l.error);
+
+            showModal('变更租约', `
+                <form onsubmit="amendLease(event, ${id})">
+                    <div class="form-row">
+                        <div class="form-group"><label>每期租金</label><input name="rent_amount" type="number" step="0.01" value="${l.rent_amount}"></div>
+                        <div class="form-group"><label>支付周期</label>
+                            <select name="payment_cycle">
+                                <option value="1" ${l.payment_cycle == 1 ? 'selected' : ''}>月付</option>
+                                <option value="3" ${l.payment_cycle == 3 ? 'selected' : ''}>季付</option>
+                                <option value="6" ${l.payment_cycle == 6 ? 'selected' : ''}>半年付</option>
+                                <option value="12" ${l.payment_cycle == 12 ? 'selected' : ''}>年付</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group"><label>押金</label><input name="deposit" type="number" step="0.01" value="${l.deposit || 0}"></div>
+                    <div class="form-group"><label>变更原因</label><input name="reason" placeholder="请输入变更原因" required></div>
+                    <div class="form-group"><label>备注</label><textarea name="remark" rows="2">${l.remark || ''}</textarea></div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                        <button type="submit" class="btn btn-primary"><i data-lucide="check" style="width:16px;height:16px;"></i> 确认变更</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        async function amendLease(e, id) {
+            e.preventDefault();
+            const form = e.target;
+            const data = {
+                rent_amount: parseFloat(form.rent_amount.value),
+                payment_cycle: parseInt(form.payment_cycle.value),
+                deposit: parseFloat(form.deposit.value) || 0,
+                reason: form.reason.value,
+                remark: form.remark.value
+            };
+
+            const result = await api(`/leases/${id}/amend`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (result.error) return alert(result.error);
+            closeModal();
+            loadLeases();
+        }
+
+        async function showTerminateLeaseModal(id) {
+            showModal('终止租约', `
+                <form onsubmit="terminateLease(event, ${id})">
+                    <div class="form-group"><label>终止原因 *</label>
+                        <select name="termination_reason" required>
+                            <option value="">请选择</option>
+                            <option value="到期终止">到期终止</option>
+                            <option value="提前终止">提前终止</option>
+                            <option value="违约终止">违约终止</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>终止日期 *</label><input name="termination_date" type="date" required></div>
+                    <div class="form-group"><label>备注</label><textarea name="remark" rows="3" placeholder="请输入终止说明"></textarea></div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                        <button type="submit" class="btn btn-danger"><i data-lucide="x-circle" style="width:16px;height:16px;"></i> 确认终止</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        async function terminateLease(e, id) {
+            e.preventDefault();
+            const form = e.target;
+            const data = {
+                termination_reason: form.termination_reason.value,
+                termination_date: form.termination_date.value,
+                remark: form.remark.value
+            };
+
+            const result = await api(`/leases/${id}/terminate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (result.error) return alert(result.error);
+            closeModal();
+            loadLeases();
+        }
+
+        async function deleteLease(id) {
+            if (!confirm('确定要删除这个租约吗？')) return;
+            const result = await api(`/leases/${id}`, { method: 'DELETE' });
+            if (result.error) return alert(result.error);
+            loadLeases();
+        }
+
+        async function loadTenants() {
+            const tenants = await api('/tenants');
+            const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'];
+
+            document.getElementById('content').innerHTML = `
+                <div class="filter-bar">
+                    <button class="btn btn-primary" onclick="showTenantModal()"><i data-lucide="plus-circle" style="width:16px;height:16px;"></i> 添加租客</button>
+                </div>
+                <div class="modern-card">
+                    ${(tenants || []).length > 0 ? `
+                        <table>
+                            <thead><tr><th>租客</th><th>电话</th><th>身份证</th><th>紧急联系人</th><th style="width:160px;">操作</th></tr></thead>
+                            <tbody>
+                                ${tenants.map((t, idx) => {
+                                    const initial = t.name.charAt(0);
+                                    const color = colors[idx % colors.length];
+                                    return `
+                                        <tr>
+                                            <td>
+                                                <div style="display:flex;align-items:center;gap:12px;">
+                                                    <div class="avatar" style="background:${color};">${initial}</div>
+                                                    <strong>${t.name}</strong>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="tenant-phone" onclick="copyText('${t.phone}')" title="点击复制">
+                                                    <i data-lucide="phone" style="width:14px;height:14px;margin-right:4px;"></i>${t.phone}
+                                                </span>
+                                            </td>
+                                            <td style="color:var(--gray-600);">${t.id_card || '-'}</td>
+                                            <td style="color:var(--gray-600);">${t.emergency_contact ? t.emergency_contact + ' ' + t.emergency_phone : '-'}</td>
+                                            <td class="actions">
+                                                <button class="btn-icon" onclick="editTenant(${t.id})" title="编辑"><i data-lucide="pencil" style="width:16px;height:16px;"></i></button>
+                                                <button class="btn-icon" onclick="deleteTenant(${t.id})" title="删除" style="color:var(--danger);"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    ` : `
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i data-lucide="users"></i></div>
+                            <div class="empty-state-title">暂无租客</div>
+                            <div class="empty-state-desc">点击上方按钮添加第一个租客</div>
+                            <button class="btn btn-primary" onclick="showTenantModal()"><i data-lucide="plus-circle" style="width:16px;height:16px;"></i> 添加租客</button>
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+
+        function copyText(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('已复制: ' + text);
+            });
+        }
+
+        function formatDate(date) {
+            const d = new Date(date);
+            return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+        }
+
+        function validatePhone(value) {
+            if (!value) return '手机号不能为空';
+            if (!/^1[3-9]\d{9}$/.test(value)) return '手机号格式错误，应为11位数字（以1开头）';
+            return null;
+        }
+
+        function validateOptionalPhone(value) {
+            if (!value) return null;
+            if (!/^1[3-9]\d{9}$/.test(value)) return '手机号格式错误，应为11位数字（以1开头）';
+            return null;
+        }
+
+        function validateIdCard(value) {
+            if (!value) return null;
+            if (!/^[1-9]\d{5}(19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$/.test(value)) return '身份证号格式错误，应为18位';
+            return null;
+        }
+
+        function showError(inputEl, message) {
+            const errorEl = inputEl.parentElement.querySelector('.field-error');
+            if (errorEl) {
+                errorEl.textContent = message || '';
+                errorEl.style.display = message ? 'block' : 'none';
+            }
+            inputEl.style.borderColor = message ? 'var(--danger)' : '';
+        }
+
+        async function showTenantModal() {
+            showModal('添加租客', `
+                <form onsubmit="addTenant(event)">
+                    <div class="form-row">
+                        <div class="form-group"><label>姓名 *</label><input name="name" required placeholder="租客姓名"></div>
+                        <div class="form-group">
+                            <label>电话 *</label>
+                            <input name="phone" required placeholder="11位手机号" oninput="showError(this, validatePhone(this.value))">
+                            <div class="field-error" style="color:var(--danger);font-size:12px;display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>身份证</label>
+                        <input name="id_card" placeholder="18位身份证号" oninput="showError(this, validateIdCard(this.value))">
+                        <div class="field-error" style="color:var(--danger);font-size:12px;display:none;"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>紧急联系人</label><input name="emergency_contact" placeholder="联系人姓名"></div>
+                        <div class="form-group">
+                            <label>紧急联系电话</label>
+                            <input name="emergency_phone" placeholder="11位手机号" oninput="showError(this, validateOptionalPhone(this.value))">
+                            <div class="field-error" style="color:var(--danger);font-size:12px;display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="form-group"><label>备注</label><textarea name="remark" rows="2" placeholder="其他备注信息"></textarea></div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                        <button type="submit" class="btn btn-primary"><i data-lucide="plus-circle" style="width:16px;height:16px;"></i> 添加</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        async function addTenant(e) {
+            e.preventDefault();
+            const form = e.target;
+            const phoneError = validatePhone(form.phone.value);
+            const idCardError = validateIdCard(form.id_card.value);
+            const emergencyPhoneError = validateOptionalPhone(form.emergency_phone.value);
+
+            if (phoneError) { showError(form.phone, phoneError); form.phone.focus(); return; }
+            if (idCardError) { showError(form.id_card, idCardError); form.id_card.focus(); return; }
+            if (emergencyPhoneError) { showError(form.emergency_phone, emergencyPhoneError); form.emergency_phone.focus(); return; }
+
+            const data = {
+                name: form.name.value,
+                phone: form.phone.value,
+                id_card: form.id_card.value,
+                emergency_contact: form.emergency_contact.value,
+                emergency_phone: form.emergency_phone.value,
+                remark: form.remark.value
+            };
+
+            const result = await api('/tenants', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (result.error) return alert(result.error);
+            closeModal();
+            loadTenants();
+        }
+
+        async function editTenant(id) {
+            const t = await api(`/tenants/${id}`);
+            if (t.error) return alert(t.error);
+
+            showModal('编辑租客', `
+                <form onsubmit="saveTenant(event, ${id})">
+                    <div class="form-row">
+                        <div class="form-group"><label>姓名 *</label><input name="name" value="${t.name}" required></div>
+                        <div class="form-group">
+                            <label>电话 *</label>
+                            <input name="phone" value="${t.phone}" required placeholder="11位手机号" oninput="showError(this, validatePhone(this.value))">
+                            <div class="field-error" style="color:var(--danger);font-size:12px;display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>身份证</label>
+                        <input name="id_card" value="${t.id_card || ''}" placeholder="18位身份证号" oninput="showError(this, validateIdCard(this.value))">
+                        <div class="field-error" style="color:var(--danger);font-size:12px;display:none;"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>紧急联系人</label><input name="emergency_contact" value="${t.emergency_contact || ''}"></div>
+                        <div class="form-group"><label>紧急联系电话</label><input name="emergency_phone" value="${t.emergency_phone || ''}"></div>
+                    </div>
+                    <div class="form-group"><label>备注</label><textarea name="remark" rows="2">${t.remark || ''}</textarea></div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                        <button type="submit" class="btn btn-primary"><i data-lucide="save" style="width:16px;height:16px;"></i> 保存</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        async function saveTenant(e, id) {
+            e.preventDefault();
+            const form = e.target;
+            const phoneError = validatePhone(form.phone.value);
+            const idCardError = validateIdCard(form.id_card.value);
+            const emergencyPhoneError = validateOptionalPhone(form.emergency_phone.value);
+
+            if (phoneError) { showError(form.phone, phoneError); form.phone.focus(); return; }
+            if (idCardError) { showError(form.id_card, idCardError); form.id_card.focus(); return; }
+            if (emergencyPhoneError) { showError(form.emergency_phone, emergencyPhoneError); form.emergency_phone.focus(); return; }
+
+            const data = {
+                name: form.name.value,
+                phone: form.phone.value,
+                id_card: form.id_card.value,
+                emergency_contact: form.emergency_contact.value,
+                emergency_phone: form.emergency_phone.value,
+                remark: form.remark.value
+            };
+
+            const result = await api(`/tenants/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (result.error) return alert(result.error);
+            closeModal();
+            loadTenants();
+        }
+
+        async function deleteTenant(id) {
+            if (!confirm('确定要删除这个租客吗？')) return;
+            const result = await api(`/tenants/${id}`, { method: 'DELETE' });
+            if (result.error) return alert(result.error);
+            loadTenants();
+        }
+
+        async function loadPayments() {
+            const [payments, leases, properties, tenants] = await Promise.all([
+                api('/payments'),
+                api('/leases'),
+                api('/properties'),
+                api('/tenants')
+            ]);
+            const propMap = {};
+            (properties || []).forEach(p => propMap[p.id] = p.name);
+            const tenantMap = {};
+            (tenants || []).forEach(t => tenantMap[t.id] = t.name);
+            const leaseMap = {};
+            (leases || []).forEach(l => leaseMap[l.id] = l);
+
+            const leasePayments = {};
+            const cycleMap = {1: '月付', 3: '季付', 6: '半年付', 12: '年付'};
+            (payments || []).forEach(p => {
+                if (!leasePayments[p.lease_id]) {
+                    leasePayments[p.lease_id] = [];
+                }
+                leasePayments[p.lease_id].push(p);
+            });
+
+            const stats = { pending: 0, overdue: 0, paid: 0 };
+            (payments || []).forEach(p => {
+                const s = p.current_status;
+                if (stats[s] !== undefined) stats[s]++;
+            });
+
+            document.getElementById('content').innerHTML = `
+                <div class="filter-bar">
+                    <select id="paymentStatusFilter" onchange="loadPaymentsFiltered()" style="min-width:150px;">
+                        <option value="">全部状态</option>
+                        <option value="pending">未到期</option>
+                        <option value="overdue">逾期</option>
+                        <option value="paid">已缴纳</option>
+                    </select>
+                </div>
+                <div class="modern-card">
+                    <div class="lease-stats">
+                        <span class="stat-item stat-pending"><i data-lucide="clock" style="width:14px;height:14px;margin-right:4px;"></i>未到期: ${stats.pending}</span>
+                        <span class="stat-item stat-overdue" style="background:var(--danger-light);color:var(--danger);"><i data-lucide="alert-circle" style="width:14px;height:14px;margin-right:4px;"></i>逾期: ${stats.overdue}</span>
+                        <span class="stat-item stat-paid"><i data-lucide="check-circle" style="width:14px;height:14px;margin-right:4px;"></i>已缴纳: ${stats.paid}</span>
+                    </div>
+                    ${Object.keys(leasePayments).length > 0 ? `
+                        ${Object.entries(leasePayments).map(([leaseId, pmts]) => {
+                            const lease = leaseMap[leaseId] || {};
+                            const hasOverdue = pmts.some(p => p.current_status === 'overdue');
+                            const allPaid = pmts.every(p => p.current_status === 'paid');
+                            const leaseStatus = hasOverdue ? '<span class="badge badge-overdue">有逾期</span>' : allPaid ? '<span class="badge badge-paid">已结清</span>' : '<span class="badge badge-pending">进行中</span>';
+                            return `
+                                <div class="payment-group">
+                                    <div class="payment-group-header" onclick="toggleLeasePayments(${leaseId})">
+                                        <div style="display:flex;align-items:center;gap:12px;">
+                                            <i data-lucide="file-text" style="width:18px;height:18px;color:var(--gray-500);"></i>
+                                            <span style="font-weight:600;">${lease.name || '租约 #' + leaseId}</span>
+                                            <span style="color:var(--gray-500);font-size:13px;">${propMap[lease.property_id] || ''}</span>
+                                            <span style="color:var(--gray-400);font-size:13px;">${cycleMap[lease.payment_cycle] || '月付'}</span>
+                                        </div>
+                                        <div style="display:flex;align-items:center;gap:12px;">
+                                            ${leaseStatus}
+                                            <i data-lucide="chevron-down" id="chevron-${leaseId}" style="width:18px;height:18px;color:var(--gray-400);transition:transform 0.2s;"></i>
+                                        </div>
+                                    </div>
+                                    <div class="payment-group-items" id="lease-payments-${leaseId}">
+                                        <table style="font-size:13px;">
+                                            <thead><tr><th>期数</th><th>到期日</th><th>覆盖周期</th><th>金额</th><th>状态</th><th>实付日期</th><th>操作</th></tr></thead>
+                                            <tbody>
+                                                ${pmts.map((p, idx) => {
+                                                    const paymentCycle = lease.payment_cycle || 1;
+                                                    const dueDate = new Date(p.due_date);
+                                                    const periodStart = new Date(dueDate);
+                                                    periodStart.setMonth(periodStart.getMonth() - paymentCycle);
+                                                    periodStart.setDate(periodStart.getDate() + 1);
+                                                    const periodEnd = new Date(dueDate);
+                                                    periodEnd.setDate(periodEnd.getDate() - 1);
+                                                    const statusBadge = p.current_status === 'overdue' ? '<span class="badge badge-overdue">逾期</span>' : p.current_status === 'paid' ? '<span class="badge badge-paid">已缴纳</span>' : '<span class="badge badge-pending">未到期</span>';
+                                                    return `<tr ${p.current_status === 'overdue' ? 'style="background:var(--danger-light);"' : ''}>
+                                                        <td>第${idx + 1}期</td>
+                                                        <td>${p.due_date}</td>
+                                                        <td>${formatDate(periodStart)} ~ ${formatDate(periodEnd)}</td>
+                                                        <td style="color:var(--success);font-weight:600;">¥${p.amount.toLocaleString()}</td>
+                                                        <td>${statusBadge}</td>
+                                                        <td>${p.paid_date || '-'}</td>
+                                                        <td>${p.current_status !== 'paid' ? `<button class="btn btn-success btn-sm" onclick="markPaid(${p.id});loadPayments();"><i data-lucide="check-circle" style="width:14px;height:14px;"></i> 确认收款</button>` : '-'}</td>
+                                                    </tr>`;
+                                                }).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    ` : `
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i data-lucide="credit-card"></i></div>
+                            <div class="empty-state-title">暂无付款记录</div>
+                            <div class="empty-state-desc">租约生效后将自动生成付款计划</div>
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+
+        function toggleLeasePayments(leaseId) {
+            const el = document.getElementById(`lease-payments-${leaseId}`);
+            const chevron = document.getElementById(`chevron-${leaseId}`);
+            const isHidden = el.style.display === 'none' || !el.classList.contains('show');
+            if (isHidden) {
+                el.style.display = 'block';
+                el.classList.add('show');
+                chevron.style.transform = 'rotate(180deg)';
+            } else {
+                el.style.display = 'none';
+                el.classList.remove('show');
+                chevron.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        async function loadPaymentsFiltered() {
+            const statusFilter = document.getElementById('paymentStatusFilter').value;
+            let url = '/payments';
+            if (statusFilter) url += `?status=${statusFilter}`;
+
+            const [payments, leases, properties, tenants] = await Promise.all([
+                api(url),
+                api('/leases'),
+                api('/properties'),
+                api('/tenants')
+            ]);
+            const propMap = {};
+            (properties || []).forEach(p => propMap[p.id] = p.name);
+            const leaseMap = {};
+            (leases || []).forEach(l => leaseMap[l.id] = l);
+
+            const leasePayments = {};
+            const cycleMap = {1: '月付', 3: '季付', 6: '半年付', 12: '年付'};
+            (payments || []).forEach(p => {
+                if (!leasePayments[p.lease_id]) {
+                    leasePayments[p.lease_id] = [];
+                }
+                leasePayments[p.lease_id].push(p);
+            });
+
+            const stats = { pending: 0, overdue: 0, paid: 0 };
+            (payments || []).forEach(p => {
+                const s = p.current_status;
+                if (stats[s] !== undefined) stats[s]++;
+            });
+
+            document.querySelector('.modern-card').innerHTML = `
+                <div class="lease-stats">
+                    <span class="stat-item stat-pending"><i data-lucide="clock" style="width:14px;height:14px;margin-right:4px;"></i>未到期: ${stats.pending}</span>
+                    <span class="stat-item stat-overdue" style="background:var(--danger-light);color:var(--danger);"><i data-lucide="alert-circle" style="width:14px;height:14px;margin-right:4px;"></i>逾期: ${stats.overdue}</span>
+                    <span class="stat-item stat-paid"><i data-lucide="check-circle" style="width:14px;height:14px;margin-right:4px;"></i>已缴纳: ${stats.paid}</span>
+                </div>
+                ${Object.keys(leasePayments).length > 0 ? `
+                    ${Object.entries(leasePayments).map(([leaseId, pmts]) => {
+                        const lease = leaseMap[leaseId] || {};
+                        const hasOverdue = pmts.some(p => p.current_status === 'overdue');
+                        const allPaid = pmts.every(p => p.current_status === 'paid');
+                        const leaseStatus = hasOverdue ? '<span class="badge badge-overdue">有逾期</span>' : allPaid ? '<span class="badge badge-paid">已结清</span>' : '<span class="badge badge-pending">进行中</span>';
+                        return `
+                            <div class="payment-group">
+                                <div class="payment-group-header" onclick="toggleLeasePayments(${leaseId})">
+                                    <div style="display:flex;align-items:center;gap:12px;">
+                                        <i data-lucide="file-text" style="width:18px;height:18px;color:var(--gray-500);"></i>
+                                        <span style="font-weight:600;">${lease.name || '租约 #' + leaseId}</span>
+                                        <span style="color:var(--gray-500);font-size:13px;">${propMap[lease.property_id] || ''}</span>
+                                        <span style="color:var(--gray-400);font-size:13px;">${cycleMap[lease.payment_cycle] || '月付'}</span>
+                                    </div>
+                                    <div style="display:flex;align-items:center;gap:12px;">
+                                        ${leaseStatus}
+                                        <i data-lucide="chevron-down" id="chevron-${leaseId}" style="width:18px;height:18px;color:var(--gray-400);transition:transform 0.2s;"></i>
+                                    </div>
+                                </div>
+                                <div class="payment-group-items" id="lease-payments-${leaseId}">
+                                    <table style="font-size:13px;">
+                                        <thead><tr><th>期数</th><th>到期日</th><th>覆盖周期</th><th>金额</th><th>状态</th><th>实付日期</th><th>操作</th></tr></thead>
+                                        <tbody>
+                                            ${pmts.map((p, idx) => {
+                                                const paymentCycle = lease.payment_cycle || 1;
+                                                const dueDate = new Date(p.due_date);
+                                                const periodStart = new Date(dueDate);
+                                                periodStart.setMonth(periodStart.getMonth() - paymentCycle);
+                                                periodStart.setDate(periodStart.getDate() + 1);
+                                                const periodEnd = new Date(dueDate);
+                                                periodEnd.setDate(periodEnd.getDate() - 1);
+                                                const statusBadge = p.current_status === 'overdue' ? '<span class="badge badge-overdue">逾期</span>' : p.current_status === 'paid' ? '<span class="badge badge-paid">已缴纳</span>' : '<span class="badge badge-pending">未到期</span>';
+                                                return `<tr ${p.current_status === 'overdue' ? 'style="background:var(--danger-light);"' : ''}>
+                                                    <td>第${idx + 1}期</td>
+                                                    <td>${p.due_date}</td>
+                                                    <td>${formatDate(periodStart)} ~ ${formatDate(periodEnd)}</td>
+                                                    <td style="color:var(--success);font-weight:600;">¥${p.amount.toLocaleString()}</td>
+                                                    <td>${statusBadge}</td>
+                                                    <td>${p.paid_date || '-'}</td>
+                                                    <td>${p.current_status !== 'paid' ? `<button class="btn btn-success btn-sm" onclick="markPaid(${p.id});loadPaymentsFiltered();"><i data-lucide="check-circle" style="width:14px;height:14px;"></i> 确认收款</button>` : '-'}</td>
+                                                </tr>`;
+                                            }).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                ` : `
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i data-lucide="credit-card"></i></div>
+                        <div class="empty-state-title">暂无付款记录</div>
+                        <div class="empty-state-desc">${statusFilter ? '试试其他筛选条件' : '租约生效后将自动生成付款计划'}</div>
+                    </div>
+                `}
+            `;
+            lucide.createIcons();
+        }
+
+        async function markPaid(id) {
+            const result = await api(`/payments/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'paid' })
+            });
+            if (result.error) return alert(result.error);
+            loadPayments();
+        }
+
+        async function loadAnalysis() {
+            const [summary, properties] = await Promise.all([api('/analysis/summary'), api('/properties')]);
+
+            const propertiesWithAnalysis = await Promise.all(
+                (properties || []).map(async p => {
+                    const result = await api(`/analysis/property/${p.id}`);
+                    return { property: p, analysis: result };
+                })
+            );
+
+            const rentedCount = summary.rented_count || 0;
+            const totalProperties = summary.total_properties || 0;
+            const occupancyRate = totalProperties > 0 ? Math.round((rentedCount / totalProperties) * 100) : 0;
+
+            document.getElementById('content').innerHTML = `
+                <div class="modern-card" style="margin-bottom:24px;">
+                    <h3 style="margin-bottom:24px;display:flex;align-items:center;gap:8px;"><i data-lucide="pie-chart" style="width:20px;height:20px;"></i>总体概览</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card primary">
+                            <div class="stat-icon primary"><i data-lucide="building-2"></i></div>
+                            <div class="stat-label">房产总数</div>
+                            <div class="stat-value">${totalProperties}</div>
+                        </div>
+                        <div class="stat-card success">
+                            <div class="stat-icon success"><i data-lucide="percent"></i></div>
+                            <div class="stat-label">出租率</div>
+                            <div class="stat-value">${occupancyRate}%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon primary"><i data-lucide="wallet"></i></div>
+                            <div class="stat-label">月租金收入</div>
+                            <div class="stat-value" style="color:var(--success);">¥${(summary.income?.total_monthly_rent || 0).toLocaleString()}</div>
+                        </div>
+                        <div class="stat-card ${(summary.profit || 0) >= 0 ? 'success' : 'danger'}">
+                            <div class="stat-icon ${(summary.profit || 0) >= 0 ? 'success' : 'danger'}"><i data-lucide="trending-up"></i></div>
+                            <div class="stat-label">年度利润</div>
+                            <div class="stat-value" style="color:${(summary.profit || 0) >= 0 ? 'var(--success)' : 'var(--danger)'};">
+                                ¥${(summary.profit || 0).toLocaleString()}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modern-card">
+                    <h3 style="margin-bottom:20px;display:flex;align-items:center;gap:8px;"><i data-lucide="bar-chart-3" style="width:20px;height:20px;"></i>各房产收益分析</h3>
+                    ${propertiesWithAnalysis.length > 0 ? `
+                        <table>
+                            <thead><tr><th>房产</th><th>状态</th><th>月租金</th><th>年租金</th><th>年成本</th><th>年度利润</th></tr></thead>
+                            <tbody>
+                                ${propertiesWithAnalysis.map(({ property: p, analysis }) => {
+                                    if (!analysis || analysis.error) return '';
+                                    const costs = analysis.costs || {};
+                                    const totalCosts = (costs.loan_cost || 0) + (costs.property_fee || 0) + (costs.opportunity_cost || 0);
+                                    return `
+                                        <tr>
+                                            <td><strong>${p.name}</strong></td>
+                                            <td><span class="badge ${p.status === '出租中' ? 'badge-rented' : 'badge-vacant'}">${p.status}</span></td>
+                                            <td style="color:var(--success);font-weight:600;">¥${(analysis.income?.monthly_rent || 0).toLocaleString()}</td>
+                                            <td>¥${(analysis.income?.annual_rent || 0).toLocaleString()}</td>
+                                            <td style="color:var(--gray-600);">¥${totalCosts.toLocaleString()}</td>
+                                            <td style="color: ${(analysis.profit || 0) >= 0 ? 'var(--success)' : 'var(--danger)'}; font-weight: 700;">
+                                                ¥${(analysis.profit || 0).toLocaleString()}
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    ` : `
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i data-lucide="bar-chart-3"></i></div>
+                            <div class="empty-state-title">暂无数据</div>
+                            <div class="empty-state-desc">添加房产后即可查看收益分析</div>
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+
+        function showModal(title, body) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalBody').innerHTML = body;
+            document.getElementById('modal').classList.add('show');
+            setTimeout(() => lucide.createIcons(), 10);
+            initImageUpload();
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('show');
+            pendingImages = [];
+            editingPropertyId = null;
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.remove('show');
+        }
+
+        function openLightbox(imagePath) {
+            document.getElementById('lightboxImg').src = API + imagePath;
+            document.getElementById('lightbox').classList.add('show');
+        }
+
+        function initImageUpload() {
+            const uploadArea = document.getElementById('uploadArea');
+            if (!uploadArea) return;
+
+            uploadArea.addEventListener('click', () => document.getElementById('fileInput').click());
+            uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+            uploadArea.addEventListener('dragleave', () => { uploadArea.classList.remove('dragover'); });
+            uploadArea.addEventListener('drop', (e) => { e.preventDefault(); uploadArea.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+            document.getElementById('fileInput')?.addEventListener('change', (e) => { handleFiles(e.target.files); });
+        }
+
+        async function handleFiles(files) {
+            const maxImages = 10;
+            const currentCount = pendingImages.length;
+            const remaining = maxImages - currentCount;
+            if (remaining <= 0) { alert('最多只能上传10张图片'); return; }
+
+            const filesToUpload = Array.from(files).slice(0, remaining);
+            for (const file of filesToUpload) {
+                if (!file.type.startsWith('image/')) { alert('请上传图片文件'); continue; }
+                if (file.size < 50 * 1024) { alert('图片太小，最小需要50KB'); continue; }
+
+                const formData = new FormData();
+                formData.append('file', file);
+                if (editingPropertyId) formData.append('property_id', editingPropertyId);
+
+                try {
+                    const res = await fetch(API + '/upload/image', { method: 'POST', body: formData });
+                    const text = await res.text();
+                    let result;
+                    try { result = JSON.parse(text); } catch { alert('上传失败：响应格式错误'); continue; }
+                    if (result.error) { alert(result.error); continue; }
+                    pendingImages.push(result);
+                    renderImagePreviews();
+                } catch (e) { console.error(e); alert('上传失败'); }
+            }
+        }
+
+        function renderImagePreviews() {
+            const container = document.getElementById('imagePreviewContainer');
+            if (!container) return;
+            container.innerHTML = pendingImages.map((img, index) => `
+                <div class="image-preview-item">
+                    <img src="${API}${img.thumbnail}" alt="预览">
+                    ${index === 0 ? '<span class="cover-badge">封面</span>' : `<button class="set-cover-btn" onclick="setCover(${index})">设封面</button>`}
+                    <button class="remove-btn" onclick="removeImage(${index})">&times;</button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function setCover(index) {
+            if (index === 0) return;
+            const item = pendingImages.splice(index, 1)[0];
+            pendingImages.unshift(item);
+            renderImagePreviews();
+        }
+
+        async function removeImage(index) {
+            const img = pendingImages[index];
+            pendingImages.splice(index, 1);
+            fetch(API + '/upload/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: img.image })
+            });
+            renderImagePreviews();
+        }
+
+        document.querySelectorAll('.nav-item').forEach(el => el.addEventListener('click', () => navigate(el.dataset.page)));
+
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            loadDashboard();
+        });
+    </script>
+</body>
+</html>
