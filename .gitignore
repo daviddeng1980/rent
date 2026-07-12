@@ -4,6 +4,7 @@ __pycache__/
 instance/
 *.db
 uploads/
+contracts/
 .env
 *.log
 .DS_Store
@@ -13,3 +14,9 @@ venv/
 dist/
 build/
 .gstack/
+online_version/
+screenshot*.png
+mobile/
+templates/*.bak*
+templates/*.v*
+templates/*.new
