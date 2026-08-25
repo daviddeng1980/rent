@@ -29,7 +29,15 @@ def serialize_property(p):
         'property_fee': p.property_fee,
         'remark': p.remark,
         'images': images,
-        'status': p.status
+        'status': p.status,
+        'usage_type': p.usage_type,
+        'cert_owner': p.cert_owner,
+        'cert_number': p.cert_number,
+        'cert_location': p.cert_location,
+        'cert_usage': p.cert_usage,
+        'cert_period': p.cert_period,
+        'cert_issue_date': p.cert_issue_date.strftime('%Y-%m-%d') if p.cert_issue_date else None,
+        'cert_remark': p.cert_remark,
     }
 
 @property_bp.route('/properties', methods=['GET'])
@@ -61,13 +69,25 @@ def add_property():
             loan_rate=data.get('loan_rate', 0),
             property_fee=data.get('property_fee', 0),
             remark=data.get('remark'),
-            images=json.dumps(data.get('images', []))
+            images=json.dumps(data.get('images', [])),
+            usage_type=data.get('usage_type', '出租'),
+            cert_owner=data.get('cert_owner'),
+            cert_number=data.get('cert_number'),
+            cert_location=data.get('cert_location'),
+            cert_usage=data.get('cert_usage'),
+            cert_period=data.get('cert_period'),
+            cert_remark=data.get('cert_remark'),
         )
         if data.get('purchase_date'):
             try:
                 p.purchase_date = datetime.strptime(data['purchase_date'], '%Y-%m-%d').date()
             except ValueError as e:
                 return jsonify({"error": f"日期格式错误: {data['purchase_date']}，正确格式：YYYY-MM-DD"}), 400
+        if data.get('cert_issue_date'):
+            try:
+                p.cert_issue_date = datetime.strptime(data['cert_issue_date'], '%Y-%m-%d').date()
+            except ValueError:
+                pass
         db.session.add(p)
         db.session.commit()
         return jsonify({"message": "Property added", "id": p.id, "status": p.status}), 201
@@ -94,6 +114,13 @@ def update_property(id):
         p.loan_rate = data.get('loan_rate', p.loan_rate)
         p.property_fee = data.get('property_fee', p.property_fee)
         p.remark = data.get('remark', p.remark)
+        p.usage_type = data.get('usage_type', p.usage_type)
+        p.cert_owner = data.get('cert_owner', p.cert_owner)
+        p.cert_number = data.get('cert_number', p.cert_number)
+        p.cert_location = data.get('cert_location', p.cert_location)
+        p.cert_usage = data.get('cert_usage', p.cert_usage)
+        p.cert_period = data.get('cert_period', p.cert_period)
+        p.cert_remark = data.get('cert_remark', p.cert_remark)
         if 'images' in data:
             p.images = json.dumps(data['images'])
         if data.get('purchase_date'):
@@ -101,6 +128,11 @@ def update_property(id):
                 p.purchase_date = datetime.strptime(data['purchase_date'], '%Y-%m-%d').date()
             except ValueError:
                 return jsonify({"error": f"日期格式错误: {data['purchase_date']}，正确格式：YYYY-MM-DD"}), 400
+        if data.get('cert_issue_date'):
+            try:
+                p.cert_issue_date = datetime.strptime(data['cert_issue_date'], '%Y-%m-%d').date()
+            except ValueError:
+                pass
         db.session.commit()
         return jsonify({"message": "Property updated", "status": p.status}), 200
     except Exception as e:
