@@ -1,0 +1,132 @@
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+  .header h1 { font-size: 22px; font-weight: 500; }
+  .header .date { font-size: 12px; color: var(--color-text-muted); }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.25rem; }
+  .stat-card { background: var(--color-surface); border-radius: 12px; padding: 1rem 1.25rem; border: 1px solid var(--color-border); }
+  .stat-label { font-size: 12px; color: var(--color-text-muted); margin-bottom: 4px; }
+  .stat-value { font-size: 24px; font-weight: 500; }
+  .stat-sub { font-size: 11px; color: var(--color-text-muted); margin-top: 2px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .badge-success { background: rgba(16,185,129,0.15); color: var(--color-success); }
+  .badge-warning { background: rgba(217,119,6,0.15); color: var(--color-warning); }
+  .badge-danger { background: rgba(225,29,72,0.15); color: var(--color-danger); }
+  .section { margin-bottom: 1.25rem; }
+  .section-title { font-size: 16px; font-weight: 500; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+  .section-title .count { font-size: 12px; color: var(--color-text-muted); font-weight: 400; }
+  .property-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .property-item { background: var(--color-surface); border-radius: 8px; padding: 0.75rem 1rem; border: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+  .property-item:hover { background: var(--color-hover); }
+  .property-name { font-weight: 500; font-size: 14px; }
+  .property-addr { font-size: 12px; color: var(--color-text-muted); margin-top: 2px; }
+  .property-rent { font-size: 14px; font-weight: 500; text-align: right; }
+  .reminder-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .reminder-item { background: var(--color-surface); border-radius: 8px; padding: 0.75rem 1rem; border: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; }
+  .reminder-item.urgent { border-left: 3px solid var(--color-danger); }
+  .reminder-item.upcoming { border-left: 3px solid var(--color-warning); }
+  .reminder-tenant { font-weight: 500; font-size: 14px; }
+  .reminder-property { font-size: 12px; color: var(--color-text-muted); }
+  .reminder-amount { font-weight: 500; font-size: 14px; }
+  .reminder-date { font-size: 12px; color: var(--color-text-muted); }
+  .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
+  .btn { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; }
+  .btn-primary { background: var(--color-accent); color: var(--color-accent-text); }
+  .btn-outline { background: transparent; color: var(--color-text); border: 1px solid var(--color-border); }
+  .btn-outline:hover { background: var(--color-hover); }
+  .empty { text-align: center; padding: 2rem; color: var(--color-text-muted); font-size: 14px; }
+</style>
+
+<div class="header">
+  <h1>🏠 物业管理看板</h1>
+  <div class="date" id="currentDate"></div>
+</div>
+
+<div class="stats-grid" id="statsGrid"></div>
+
+<div class="section">
+  <div class="section-title">房产概览 <span class="count" id="propertyCount"></span></div>
+  <div class="property-list" id="propertyList"></div>
+</div>
+
+<div class="section">
+  <div class="section-title">租金提醒 <span class="count" id="reminderCount"></span></div>
+  <div class="reminder-list" id="reminderList"></div>
+</div>
+
+<div class="actions">
+  <button class="btn btn-primary" id="btnRefresh">🔄 刷新数据</button>
+  <button class="btn btn-outline" id="btnAddProp">＋ 添加房产</button>
+  <button class="btn btn-outline" id="btnAddTenant">＋ 添加租客</button>
+  <button class="btn btn-outline" id="btnNewLease">📝 新建租约</button>
+  <button class="btn btn-outline" id="btnPayments">💰 付款明细</button>
+  <button class="btn btn-outline" id="btnReport">📊 年度报告</button>
+</div>
+
+<script>
+const data = window.__WIDGET_DATA__ || {};
+document.getElementById('currentDate').textContent = new Date().toLocaleDateString('zh-CN', {year:'numeric',month:'long',day:'numeric',weekday:'long'});
+
+const summary = data.summary || {};
+const properties = data.properties || [];
+const reminders = data.reminders || [];
+
+const statsGrid = document.getElementById('statsGrid');
+const stats = [
+  { label: '房产总数', value: summary.total_properties || 0, sub: '出租 ' + (summary.rented_count||0) + ' / 空置 ' + (summary.vacant_count||0) },
+  { label: '出租率', value: summary.occupancy_rate || '0%', sub: '', badge: parseFloat(summary.occupancy_rate||'0') >= 80 ? {type:'success',text:'良好'} : {type:'warning',text:'待改善'} },
+  { label: '月租金收入', value: '¥' + (summary.income?.monthly||0).toLocaleString(), sub: '年 ¥' + (summary.income?.annual||0).toLocaleString() },
+  { label: '年净利润', value: '¥' + (summary.annual_profit||0).toLocaleString(), sub: '成本 ¥' + (summary.costs?.total||0).toLocaleString(), badge: (summary.annual_profit||0) > 0 ? {type:'success',text:'盈利'} : {type:'danger',text:'亏损'} }
+];
+stats.forEach(s => {
+  const card = document.createElement('div');
+  card.className = 'stat-card';
+  let html = '<div class="stat-label">' + s.label + '</div><div class="stat-value">' + s.value + '</div>';
+  if (s.sub) html += '<div class="stat-sub">' + s.sub + '</div>';
+  if (s.badge) html += '<span class="badge badge-' + s.badge.type + '" style="margin-top:4px">' + s.badge.text + '</span>';
+  card.innerHTML = html;
+  statsGrid.appendChild(card);
+});
+
+document.getElementById('propertyCount').textContent = '(' + properties.length + '套)';
+const propList = document.getElementById('propertyList');
+if (properties.length === 0) {
+  propList.innerHTML = '<div class="empty">暂无房产数据</div>';
+} else {
+  properties.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'property-item';
+    item.dataset.action = 'view_property';
+    item.dataset.propertyId = p.id;
+    const statusClass = p.status === '出租中' ? 'success' : 'warning';
+    let right = '<span class="badge badge-' + statusClass + '">' + p.status + '</span>';
+    if (p.rent_guide) right += '<div class="property-rent" style="margin-top:4px">¥' + p.rent_guide.toLocaleString() + '/月</div>';
+    item.innerHTML = '<div><div class="property-name">' + p.name + '</div><div class="property-addr">' + (p.address||'') + '</div></div><div style="text-align:right">' + right + '</div>';
+    propList.appendChild(item);
+  });
+}
+
+document.getElementById('reminderCount').textContent = '(' + reminders.length + '条)';
+const remList = document.getElementById('reminderList');
+if (reminders.length === 0) {
+  remList.innerHTML = '<div class="empty">近期无租金到期</div>';
+} else {
+  reminders.forEach(r => {
+    const item = document.createElement('div');
+    const urgent = r.days_until_due <= 3;
+    item.className = 'reminder-item ' + (urgent ? 'urgent' : 'upcoming');
+    item.innerHTML = '<div><div class="reminder-tenant">' + (r.tenant_name||'') + '</div><div class="reminder-property">' + (r.property_name||'') + '</div></div><div style="text-align:right"><div class="reminder-amount">¥' + (r.amount||0).toLocaleString() + '</div><div class="reminder-date">' + r.due_date + (r.days_until_due !== undefined ? ' (' + r.days_until_due + '天)' : '') + '</div></div>';
+    remList.appendChild(item);
+  });
+}
+
+document.getElementById('btnRefresh').addEventListener('click', () => sendToAgent({action:'refresh',type:'dashboard'}));
+document.getElementById('btnAddProp').addEventListener('click', () => sendToAgent({action:'add_property'}));
+document.getElementById('btnAddTenant').addEventListener('click', () => sendToAgent({action:'add_tenant'}));
+document.getElementById('btnNewLease').addEventListener('click', () => sendToAgent({action:'create_lease'}));
+document.getElementById('btnPayments').addEventListener('click', () => sendToAgent({action:'view_payments'}));
+document.getElementById('btnReport').addEventListener('click', () => sendToAgent({action:'annual_report'}));
+propList.querySelectorAll('.property-item').forEach(el => {
+  el.addEventListener('click', () => sendToAgent({action:'view_property', property_id: parseInt(el.dataset.propertyId)}));
+});
+</script>

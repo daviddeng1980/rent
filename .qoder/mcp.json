@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "rent-management": {
+      "command": "python",
+      "args": ["d:/code/rent/mcp_server.py", "--transport", "stdio"]
+    },
+    "stockcheck": {
+      "command": "node",
+      "args": ["d:/code/stockcheck/mcp-server.js"],
+      "env": { "STOCKCHECK_API_URL": "http://localhost:3000/api" }
+    }
+  }
+}

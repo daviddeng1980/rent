@@ -1,0 +1,35 @@
+{
+  "_comment": "租金管理系统 MCP 服务配置 — 供 AI Agent 客户端使用",
+
+  "stdio": {
+    "_comment": "本地 Agent 配置（如 Claude Desktop, Qoder）— MCP Server 作为子进程启动",
+    "mcpServers": {
+      "rent-management": {
+        "command": "python",
+        "args": ["d:/code/rent/mcp_server.py", "--transport", "stdio"]
+      }
+    }
+  },
+
+  "http": {
+    "_comment": "远程 Agent 配置 — MCP Server 作为独立 HTTP 服务运行",
+    "mcpServers": {
+      "rent-management": {
+        "url": "http://localhost:8000/mcp"
+      }
+    },
+    "启动命令": "python d:/code/rent/mcp_server.py --transport http --port 8000"
+  },
+
+  "remote_http": {
+    "_comment": "远程服务器部署配置 — 通过 nginx 反向代理，腾讯云公网可访问",
+    "mcpServers": {
+      "rent-management": {
+        "url": "https://daviddeng.online/mcp"
+      }
+    },
+    "备用地址": "https://49.235.162.179/mcp",
+    "服务器内部端口": 9000,
+    "启动命令": "python /var/www/html/rent/mcp_server.py --transport http --port 9000"
+  }
+}
