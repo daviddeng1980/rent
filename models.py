@@ -16,12 +16,24 @@ class Property(db.Model):
     property_fee = db.Column(db.Float, default=0)
     remark = db.Column(db.Text)
     images = db.Column(db.Text, default='[]')
+    # 房产证信息
+    cert_owner = db.Column(db.String(100))  # 产权人
+    cert_number = db.Column(db.String(100))  # 不动产证号
+    cert_location = db.Column(db.String(200))  # 坐落位置
+    cert_usage = db.Column(db.String(50))  # 用途
+    cert_period = db.Column(db.String(100))  # 使用期限
+    cert_issue_date = db.Column(db.Date)  # 发证日期
+    cert_remark = db.Column(db.Text)  # 备注
+    # 使用方式：出租/自住
+    usage_type = db.Column(db.String(20), default='出租')  # 出租/自住
     create_time = db.Column(db.DateTime, default=db.func.now())
 
     leases = db.relationship('Lease', backref='property', lazy=True)
 
     @property
     def status(self):
+        if self.usage_type == '自住':
+            return '自住'
         active_lease = Lease.query.filter_by(property_id=self.id, status='active').first()
         return '出租中' if active_lease else '空置'
 
