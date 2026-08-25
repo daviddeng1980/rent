@@ -83,7 +83,12 @@ def delete_image():
         return jsonify({'error': 'No image path'}), 400
 
     image_path = image_path.lstrip('/')
-    thumb_path = image_path.replace('/uploads/', '/uploads/thumbs/thumb_')
+    # uploads/xxx.jpg -> uploads/thumbs/thumb_xxx.jpg
+    if image_path.startswith('uploads/'):
+        filename = image_path[len('uploads/'):]
+        thumb_path = os.path.join(THUMBNAIL_FOLDER, f'thumb_{filename}')
+    else:
+        thumb_path = image_path
 
     try:
         if os.path.exists(image_path):

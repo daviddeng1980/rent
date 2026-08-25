@@ -309,6 +309,13 @@
         .image-preview-item .remove-btn { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; background: rgba(0,0,0,0.6); color: white; border: none; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
         .image-preview-item .cover-badge { position: absolute; bottom: 4px; left: 4px; padding: 4px 8px; border-radius: 4px; background: var(--primary); color: white; font-size: 10px; font-weight: 600; }
         .image-preview-item .set-cover-btn { position: absolute; bottom: 4px; right: 4px; padding: 4px 8px; border-radius: 4px; background: rgba(0,0,0,0.6); color: white; border: none; cursor: pointer; font-size: 10px; }
+        /* Toast */
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; }
+        .toast { padding: 12px 20px; border-radius: 8px; color: white; font-size: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); animation: toastIn 0.3s ease; max-width: 320px; }
+        .toast-success { background: #10b981; }
+        .toast-error { background: #ef4444; }
+        .toast-info { background: #3b82f6; }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Image Gallery */
         .image-gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
@@ -2206,17 +2213,15 @@ body.mobile-open-modal { overflow: hidden; }
         function initIconsAfterUpdate() { if (typeof lucide !== "undefined") lucide.createIcons(); }
 
         function initImageUpload() {
-            // 处理添加房产的上传区域
-            const uploadArea = document.getElementById('uploadArea');
-            if (uploadArea) {
-                const fileInput = document.getElementById('fileInput');
-                if (fileInput) {
-                    uploadArea.addEventListener('click', () => fileInput.click());
-                    uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
-                    uploadArea.addEventListener('dragleave', () => { uploadArea.classList.remove('dragover'); });
-                    uploadArea.addEventListener('drop', (e) => { e.preventDefault(); uploadArea.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
-                    fileInput.addEventListener('change', (e) => { handleFiles(e.target.files); });
-                }
+            // 处理添加房产的上传区域（兼容新旧 ID）
+            const uploadArea = document.getElementById('uploadAreaAdd') || document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInputAdd') || document.getElementById('fileInput');
+            if (uploadArea && fileInput) {
+                uploadArea.addEventListener('click', () => fileInput.click());
+                uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+                uploadArea.addEventListener('dragleave', () => { uploadArea.classList.remove('dragover'); });
+                uploadArea.addEventListener('drop', (e) => { e.preventDefault(); uploadArea.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+                fileInput.addEventListener('change', (e) => { handleFiles(e.target.files); });
             }
 
             // 处理编辑房产的上传区域
@@ -2248,20 +2253,24 @@ body.mobile-open-modal { overflow: hidden; }
                 formData.append('file', file);
                 if (editingPropertyId) formData.append('property_id', editingPropertyId);
 
+                const fileInfo = `「${file.name}」`;
+                showToast(`正在上传 ${fileInfo} ...`, 'info', 0);
                 try {
                     const res = await fetch(API + '/upload/image', { method: 'POST', body: formData });
                     const text = await res.text();
                     let result;
-                    try { result = JSON.parse(text); } catch { alert('上传失败：响应格式错误'); continue; }
-                    if (result.error) { alert(result.error); continue; }
+                    try { result = JSON.parse(text); } catch { showToast(`上传失败 ${fileInfo}：响应格式错误`, 'error'); continue; }
+                    if (result.error) { showToast(`上传失败 ${fileInfo}：${result.error}`, 'error'); continue; }
                     pendingImages.push(result);
                     renderImagePreviews();
-                } catch (e) { console.error(e); alert('上传失败'); }
+                    showToast(`上传成功 ${fileInfo}`, 'success');
+                } catch (e) { console.error(e); showToast(`上传失败 ${fileInfo}：网络错误`, 'error'); }
             }
         }
 
         function renderImagePreviews() {
-            const container = document.getElementById('imagePreviewContainer');
+            // 编辑弹窗使用 imagePreviewContainerEdit，添加弹窗使用 imagePreviewContainer
+            const container = document.getElementById('imagePreviewContainerEdit') || document.getElementById('imagePreviewContainer');
             if (!container) return;
             container.innerHTML = pendingImages.map((img, index) => `
                 <div class="image-preview-item">
@@ -2280,14 +2289,35 @@ body.mobile-open-modal { overflow: hidden; }
         }
 
         async function removeImage(index) {
+            if (!confirm('确定要删除这张图片吗？')) return;
             const img = pendingImages[index];
             pendingImages.splice(index, 1);
-            fetch(API + '/upload/delete', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image: img.image })
-            });
+            try {
+                const res = await fetch(API + '/upload/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: img.image })
+                });
+                if (res.ok) showToast('图片已删除', 'success');
+                else showToast('删除失败，请稍后重试', 'error');
+            } catch (e) { showToast('删除失败：网络错误', 'error'); }
             renderImagePreviews();
+        }
+
+        // 全局提示消息（duration=0 表示自动消失 2.5 秒）
+        function showToast(message, type = 'info', duration = 2500) {
+            let wrap = document.getElementById('toastContainer');
+            if (!wrap) {
+                wrap = document.createElement('div');
+                wrap.id = 'toastContainer';
+                wrap.className = 'toast-container';
+                document.body.appendChild(wrap);
+            }
+            const toast = document.createElement('div');
+            toast.className = 'toast toast-' + type;
+            toast.textContent = message;
+            wrap.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, duration);
         }
 
         document.querySelectorAll('.nav-item').forEach(el => el.addEventListener('click', () => navigate(el.dataset.page)));
