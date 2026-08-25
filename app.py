@@ -9,6 +9,7 @@ CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///rent_management.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 USERNAME = 'daviddeng'
 PASSWORD = '810123'
@@ -164,8 +165,6 @@ def mobile_index():
 </body>
 </html>
         '''
-    return render_template('index_mobile.html')
-
     return render_template('index.html')
 
 from routes.property import property_bp
