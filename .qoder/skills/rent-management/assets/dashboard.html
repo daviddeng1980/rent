@@ -73,7 +73,7 @@ const reminders = data.reminders || [];
 
 const statsGrid = document.getElementById('statsGrid');
 const stats = [
-  { label: '房产总数', value: summary.total_properties || 0, sub: '出租 ' + (summary.rented_count||0) + ' / 空置 ' + (summary.vacant_count||0) },
+  { label: '房产总数', value: summary.total_properties || 0, sub: '出租 ' + (summary.rented_count||0) + ' / 自住 ' + (summary.self_use_count||0) + ' / 空置 ' + (summary.vacant_count||0) },
   { label: '出租率', value: summary.occupancy_rate || '0%', sub: '', badge: parseFloat(summary.occupancy_rate||'0') >= 80 ? {type:'success',text:'良好'} : {type:'warning',text:'待改善'} },
   { label: '月租金收入', value: '¥' + (summary.income?.monthly||0).toLocaleString(), sub: '年 ¥' + (summary.income?.annual||0).toLocaleString() },
   { label: '年净利润', value: '¥' + (summary.annual_profit||0).toLocaleString(), sub: '成本 ¥' + (summary.costs?.total||0).toLocaleString(), badge: (summary.annual_profit||0) > 0 ? {type:'success',text:'盈利'} : {type:'danger',text:'亏损'} }
@@ -98,8 +98,9 @@ if (properties.length === 0) {
     item.className = 'property-item';
     item.dataset.action = 'view_property';
     item.dataset.propertyId = p.id;
-    const statusClass = p.status === '出租中' ? 'success' : 'warning';
-    let right = '<span class="badge badge-' + statusClass + '">' + p.status + '</span>';
+    const statusClass = p.status === '出租中' ? 'success' : p.status === '自住' ? 'warning' : 'warning';
+    const statusLabel = p.status === '自住' ? '自住' : p.status;
+    let right = '<span class="badge badge-' + statusClass + '">' + statusLabel + '</span>';
     if (p.rent_guide) right += '<div class="property-rent" style="margin-top:4px">¥' + p.rent_guide.toLocaleString() + '/月</div>';
     item.innerHTML = '<div><div class="property-name">' + p.name + '</div><div class="property-addr">' + (p.address||'') + '</div></div><div style="text-align:right">' + right + '</div>';
     propList.appendChild(item);

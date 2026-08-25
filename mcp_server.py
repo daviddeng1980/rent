@@ -60,6 +60,14 @@ def _serialize_property(p: Property) -> dict:
         'loan_amount': p.loan_amount, 'loan_rate': p.loan_rate,
         'property_fee': p.property_fee, 'remark': p.remark,
         'images': images, 'status': p.status,
+        'usage_type': p.usage_type,
+        'cert_owner': p.cert_owner,
+        'cert_number': p.cert_number,
+        'cert_location': p.cert_location,
+        'cert_usage': p.cert_usage,
+        'cert_period': p.cert_period,
+        'cert_issue_date': p.cert_issue_date.strftime('%Y-%m-%d') if p.cert_issue_date else None,
+        'cert_remark': p.cert_remark,
     }
 
 
@@ -170,8 +178,16 @@ def add_property(
     loan_rate: float = 0,
     property_fee: float = 0,
     remark: Optional[str] = None,
+    usage_type: str = '出租',
+    cert_owner: Optional[str] = None,
+    cert_number: Optional[str] = None,
+    cert_location: Optional[str] = None,
+    cert_usage: Optional[str] = None,
+    cert_period: Optional[str] = None,
+    cert_issue_date: Optional[str] = None,
+    cert_remark: Optional[str] = None,
 ) -> dict:
-    """添加新房产。日期格式 YYYY-MM-DD"""
+    """添加新房产。日期格式 YYYY-MM-DD。usage_type: 出租/自住"""
     with app.app_context():
         try:
             p = Property(
@@ -181,9 +197,21 @@ def add_property(
                 purchase_price=purchase_price, loan_amount=loan_amount,
                 loan_rate=loan_rate, property_fee=property_fee,
                 remark=remark, images='[]',
+                usage_type=usage_type,
+                cert_owner=cert_owner,
+                cert_number=cert_number,
+                cert_location=cert_location,
+                cert_usage=cert_usage,
+                cert_period=cert_period,
+                cert_remark=cert_remark,
             )
             if purchase_date:
                 p.purchase_date = datetime.strptime(purchase_date, '%Y-%m-%d').date()
+            if cert_issue_date:
+                try:
+                    p.cert_issue_date = datetime.strptime(cert_issue_date, '%Y-%m-%d').date()
+                except ValueError:
+                    pass
             db.session.add(p)
             db.session.commit()
             return {"message": "房产添加成功", "id": p.id, "status": p.status}
@@ -208,6 +236,14 @@ def update_property(
     property_fee: Optional[float] = None,
     remark: Optional[str] = None,
     purchase_date: Optional[str] = None,
+    usage_type: Optional[str] = None,
+    cert_owner: Optional[str] = None,
+    cert_number: Optional[str] = None,
+    cert_location: Optional[str] = None,
+    cert_usage: Optional[str] = None,
+    cert_period: Optional[str] = None,
+    cert_issue_date: Optional[str] = None,
+    cert_remark: Optional[str] = None,
 ) -> dict:
     """更新房产信息。只需传入要修改的字段，日期格式 YYYY-MM-DD"""
     with app.app_context():
@@ -220,13 +256,21 @@ def update_property(
             'furniture': furniture, 'rent_guide': rent_guide,
             'purchase_price': purchase_price, 'loan_amount': loan_amount,
             'loan_rate': loan_rate, 'property_fee': property_fee,
-            'remark': remark,
+            'remark': remark, 'usage_type': usage_type,
+            'cert_owner': cert_owner, 'cert_number': cert_number,
+            'cert_location': cert_location, 'cert_usage': cert_usage,
+            'cert_period': cert_period, 'cert_remark': cert_remark,
         }
         for key, value in updates.items():
             if value is not None:
                 setattr(p, key, value)
         if purchase_date:
             p.purchase_date = datetime.strptime(purchase_date, '%Y-%m-%d').date()
+        if cert_issue_date:
+            try:
+                p.cert_issue_date = datetime.strptime(cert_issue_date, '%Y-%m-%d').date()
+            except ValueError:
+                pass
         db.session.commit()
         return {"message": "房产更新成功", "status": p.status}
 
@@ -488,7 +532,8 @@ def get_summary() -> dict:
         properties = Property.query.all()
         total = len(properties)
         rented = sum(1 for p in properties if p.status == '出租中')
-        vacant = total - rented
+        self_use = sum(1 for p in properties if p.status == '自住')
+        vacant = total - rented - self_use
 
         total_monthly = 0
         total_annual = 0
@@ -509,6 +554,7 @@ def get_summary() -> dict:
             'total_properties': total,
             'rented_count': rented,
             'vacant_count': vacant,
+            'self_use_count': self_use,
             'occupancy_rate': f"{(rented / total * 100):.1f}%" if total else "0%",
             'income': {'monthly': total_monthly, 'annual': total_annual},
             'costs': {'loan': total_loan_cost, 'property_fee': total_fee, 'total': total_loan_cost + total_fee},

@@ -201,6 +201,7 @@
         .badge { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
         .badge-rented { background: var(--success-light); color: var(--success); }
         .badge-vacant { background: var(--warning-light); color: var(--warning); }
+        .badge-self-use { background: #e0e7ff; color: #4338ca; }
         .badge-active { background: #dbeafe; color: var(--primary); }
         .badge-renewed { background: #e0e7ff; color: #4338ca; }
         .badge-terminated { background: var(--gray-200); color: var(--gray-600); }
@@ -740,7 +741,7 @@ body.mobile-open-modal { overflow: hidden; }
                                             <div class="property-card-address"></svg>${p.address}</div>
                                             <div class="property-card-footer">
                                                 <span class="property-card-price">¥${(p.rent_guide || 0).toLocaleString()}/月</span>
-                                                <span class="badge ${p.status === '出租中' ? 'badge-rented' : 'badge-vacant'}">${p.status}</span>
+                                                <span class="badge ${p.status === '出租中' ? 'badge-rented' : p.status === '自住' ? 'badge-self-use' : 'badge-vacant'}">${p.status}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -770,6 +771,7 @@ body.mobile-open-modal { overflow: hidden; }
                     <div style="display:flex;gap:8px;">
                         <span class="filter-tag ${!filterStatus ? 'active' : ''}" onclick="filterProperties('')">全部</span>
                         <span class="filter-tag ${filterStatus === '出租中' ? 'active' : ''}" onclick="filterProperties('出租中')">出租中</span>
+                        <span class="filter-tag ${filterStatus === '自住' ? 'active' : ''}" onclick="filterProperties('自住')">自住</span>
                         <span class="filter-tag ${filterStatus === '空置' ? 'active' : ''}" onclick="filterProperties('空置')">空置</span>
                     </div>
                 </div>
@@ -788,7 +790,7 @@ body.mobile-open-modal { overflow: hidden; }
                                             <td style="color:var(--gray-600);">${p.address}</td>
                                             <td>${p.area ? p.area + '㎡' : '-'}</td>
                                             <td style="color:var(--success);font-weight:600;">${p.rent_guide ? '¥' + p.rent_guide.toLocaleString() : '-'}</td>
-                                            <td><span class="badge ${p.status === '出租中' ? 'badge-rented' : 'badge-vacant'}">${p.status}</span></td>
+                                            <td><span class="badge ${p.status === '出租中' ? 'badge-rented' : p.status === '自住' ? 'badge-self-use' : 'badge-vacant'}">${p.status}</span></td>
                                             <td class="actions">
                                                 <button class="btn-icon" onclick="viewProperty(${p.id})" title="查看"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                                                 <button class="btn-icon" onclick="editProperty(${p.id})" title="编辑"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
@@ -833,6 +835,15 @@ body.mobile-open-modal { overflow: hidden; }
                                 <option value="商铺">商铺</option>
                                 <option value="公寓">公寓</option>
                                 <option value="别墅">别墅</option>
+                                <option value="车位">车位</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>使用方式</label>
+                            <select name="usage_type">
+                                <option value="出租">出租</option>
+                                <option value="自住">自住</option>
                             </select>
                         </div>
                     </div>
@@ -866,6 +877,22 @@ body.mobile-open-modal { overflow: hidden; }
                         <div class="form-group"><label>贷款利率</label><input name="loan_rate" type="number" step="0.0001" placeholder="如 0.05 表示 5%"></div>
                     </div>
                     <div class="form-group"><label>备注</label><textarea name="remark" rows="2" placeholder="其他备注信息"></textarea></div>
+                    <div style="border-top:1px solid var(--gray-200);margin:16px 0 12px;padding-top:12px;">
+                        <div style="font-size:14px;font-weight:600;color:var(--gray-700);margin-bottom:12px;">📋 房产证信息</div>
+                        <div class="form-row">
+                            <div class="form-group"><label>产权人</label><input name="cert_owner" placeholder="产权人姓名"></div>
+                            <div class="form-group"><label>不动产证号</label><input name="cert_number" placeholder="不动产权证书号"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>坐落位置</label><input name="cert_location" placeholder="不动产坐落位置"></div>
+                            <div class="form-group"><label>用途</label><input name="cert_usage" placeholder="如：住宅/商业"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>使用期限</label><input name="cert_period" placeholder="如：2070-12-31"></div>
+                            <div class="form-group"><label>发证日期</label><input name="cert_issue_date" type="date"></div>
+                        </div>
+                        <div class="form-group"><label>备注</label><textarea name="cert_remark" rows="2" placeholder="房产证相关备注"></textarea></div>
+                    </div>
                     <div class="form-group">
                         <label>房产图片 (最多10张)</label>
                         <div class="image-upload-area" id="uploadAreaAdd">
@@ -905,6 +932,14 @@ body.mobile-open-modal { overflow: hidden; }
                 loan_amount: form.loan_amount.value ? parseFloat(form.loan_amount.value) : null,
                 loan_rate: form.loan_rate.value ? parseFloat(form.loan_rate.value) : null,
                 remark: form.remark.value,
+                usage_type: form.usage_type.value || '出租',
+                cert_owner: form.cert_owner.value || null,
+                cert_number: form.cert_number.value || null,
+                cert_location: form.cert_location.value || null,
+                cert_usage: form.cert_usage.value || null,
+                cert_period: form.cert_period.value || null,
+                cert_issue_date: form.cert_issue_date.value || null,
+                cert_remark: form.cert_remark.value || null,
                 images: images
             };
 
@@ -938,7 +973,7 @@ body.mobile-open-modal { overflow: hidden; }
                 ` : ''}
                 <div class="detail-grid" style="${images.length > 0 ? 'margin-top:16px;' : ''}">
                     <div class="detail-item"><div class="detail-label">名称</div><div class="detail-value">${p.name}</div></div>
-                    <div class="detail-item"><div class="detail-label">状态</div><div class="detail-value"><span class="badge ${p.status === '出租中' ? 'badge-rented' : 'badge-vacant'}">${p.status}</span></div></div>
+                    <div class="detail-item"><div class="detail-label">状态</div><div class="detail-value"><span class="badge ${p.status === '出租中' ? 'badge-rented' : p.status === '自住' ? 'badge-self-use' : 'badge-vacant'}">${p.status}</span></div></div>
                     <div class="detail-item"><div class="detail-label">地址</div><div class="detail-value">${p.address}</div></div>
                     <div class="detail-item"><div class="detail-label">面积</div><div class="detail-value">${p.area ? p.area + '㎡' : '-'}</div></div>
                     <div class="detail-item"><div class="detail-label">类型</div><div class="detail-value">${p.property_type || '-'}</div></div>
@@ -952,6 +987,19 @@ body.mobile-open-modal { overflow: hidden; }
                 </div>
                 ${p.furniture ? `<div style="margin-top:16px;"><div class="detail-label">家具家电</div><div style="margin-top:8px;">${p.furniture.split(',').map(f => `<span class="tag">${f.trim()}</span>`).join('')}</div></div>` : ''}
                 ${p.remark ? `<div style="margin-top:16px;"><div class="detail-label">备注</div><div class="detail-value" style="white-space:pre-wrap;margin-top:4px;">${p.remark}</div></div>` : ''}
+                ${(p.cert_owner || p.cert_number || p.cert_location || p.cert_usage || p.cert_period || p.cert_issue_date) ? `
+                <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--gray-200);">
+                    <h4 style="margin-bottom:12px;font-size:14px;color:var(--gray-700);"> 房产证信息</h4>
+                    <div class="detail-grid">
+                        ${p.cert_owner ? `<div class="detail-item"><div class="detail-label">产权人</div><div class="detail-value">${p.cert_owner}</div></div>` : ''}
+                        ${p.cert_number ? `<div class="detail-item"><div class="detail-label">不动产证号</div><div class="detail-value">${p.cert_number}</div></div>` : ''}
+                        ${p.cert_location ? `<div class="detail-item"><div class="detail-label">坐落位置</div><div class="detail-value">${p.cert_location}</div></div>` : ''}
+                        ${p.cert_usage ? `<div class="detail-item"><div class="detail-label">用途</div><div class="detail-value">${p.cert_usage}</div></div>` : ''}
+                        ${p.cert_period ? `<div class="detail-item"><div class="detail-label">使用期限</div><div class="detail-value">${p.cert_period}</div></div>` : ''}
+                        ${p.cert_issue_date ? `<div class="detail-item"><div class="detail-label">发证日期</div><div class="detail-value">${p.cert_issue_date}</div></div>` : ''}
+                        ${p.cert_remark ? `<div class="detail-item" style="grid-column:1/-1;"><div class="detail-label">备注</div><div class="detail-value" style="white-space:pre-wrap;">${p.cert_remark}</div></div>` : ''}
+                    </div>
+                </div>` : ''}
 
                 ${analysis && !analysis.error ? `
                     <div style="margin-top:24px;padding-top:24px;border-top:1px solid var(--gray-200);">
@@ -1006,6 +1054,15 @@ body.mobile-open-modal { overflow: hidden; }
                                 <option value="商铺" ${p.property_type === '商铺' ? 'selected' : ''}>商铺</option>
                                 <option value="公寓" ${p.property_type === '公寓' ? 'selected' : ''}>公寓</option>
                                 <option value="别墅" ${p.property_type === '别墅' ? 'selected' : ''}>别墅</option>
+                                <option value="车位" ${p.property_type === '车位' ? 'selected' : ''}>车位</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>使用方式</label>
+                            <select name="usage_type">
+                                <option value="出租" ${(!p.usage_type || p.usage_type === '出租') ? 'selected' : ''}>出租</option>
+                                <option value="自住" ${p.usage_type === '自住' ? 'selected' : ''}>自住</option>
                             </select>
                         </div>
                     </div>
@@ -1039,6 +1096,22 @@ body.mobile-open-modal { overflow: hidden; }
                         <div class="form-group"><label>贷款利率</label><input name="loan_rate" type="number" step="0.0001" value="${p.loan_rate || ''}"></div>
                     </div>
                     <div class="form-group"><label>备注</label><textarea name="remark" rows="2">${p.remark || ''}</textarea></div>
+                    <div style="border-top:1px solid var(--gray-200);margin:16px 0 12px;padding-top:12px;">
+                        <div style="font-size:14px;font-weight:600;color:var(--gray-700);margin-bottom:12px;">📋 房产证信息</div>
+                        <div class="form-row">
+                            <div class="form-group"><label>产权人</label><input name="cert_owner" value="${p.cert_owner || ''}" placeholder="产权人姓名"></div>
+                            <div class="form-group"><label>不动产证号</label><input name="cert_number" value="${p.cert_number || ''}" placeholder="不动产权证书号"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>坐落位置</label><input name="cert_location" value="${p.cert_location || ''}" placeholder="不动产坐落位置"></div>
+                            <div class="form-group"><label>用途</label><input name="cert_usage" value="${p.cert_usage || ''}" placeholder="如：住宅/商业"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>使用期限</label><input name="cert_period" value="${p.cert_period || ''}" placeholder="如：2070-12-31"></div>
+                            <div class="form-group"><label>发证日期</label><input name="cert_issue_date" type="date" value="${p.cert_issue_date || ''}"></div>
+                        </div>
+                        <div class="form-group"><label>备注</label><textarea name="cert_remark" rows="2" placeholder="房产证相关备注">${p.cert_remark || ''}</textarea></div>
+                    </div>
                     <div class="form-group">
                         <label>房产图片 (最多10张)</label>
                         <div class="image-upload-area" id="uploadAreaEdit">
@@ -1079,6 +1152,14 @@ body.mobile-open-modal { overflow: hidden; }
                 loan_amount: form.loan_amount.value ? parseFloat(form.loan_amount.value) : null,
                 loan_rate: form.loan_rate.value ? parseFloat(form.loan_rate.value) : null,
                 remark: form.remark.value,
+                usage_type: form.usage_type.value || '出租',
+                cert_owner: form.cert_owner.value || null,
+                cert_number: form.cert_number.value || null,
+                cert_location: form.cert_location.value || null,
+                cert_usage: form.cert_usage.value || null,
+                cert_period: form.cert_period.value || null,
+                cert_issue_date: form.cert_issue_date.value || null,
+                cert_remark: form.cert_remark.value || null,
                 images: images
             };
 
@@ -2078,7 +2159,7 @@ body.mobile-open-modal { overflow: hidden; }
                                     return `
                                         <tr>
                                             <td><strong>${p.name}</strong></td>
-                                            <td><span class="badge ${p.status === '出租中' ? 'badge-rented' : 'badge-vacant'}">${p.status}</span></td>
+                                            <td><span class="badge ${p.status === '出租中' ? 'badge-rented' : p.status === '自住' ? 'badge-self-use' : 'badge-vacant'}">${p.status}</span></td>
                                             <td style="color:var(--success);font-weight:600;">¥${(analysis.income?.monthly_rent || 0).toLocaleString()}</td>
                                             <td>¥${(analysis.income?.annual_rent || 0).toLocaleString()}</td>
                                             <td style="color:var(--gray-600);">¥${totalCosts.toLocaleString()}</td>
