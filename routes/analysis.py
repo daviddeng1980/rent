@@ -45,7 +45,8 @@ def summary():
 
     total_properties = len(properties)
     rented_count = sum(1 for p in properties if p.status == '出租中')
-    vacant_count = total_properties - rented_count
+    self_use_count = sum(1 for p in properties if p.status == '自住')
+    vacant_count = total_properties - rented_count - self_use_count
 
     total_monthly_rent = 0
     total_annual_rent = 0
@@ -65,6 +66,7 @@ def summary():
     return jsonify({
         'total_properties': total_properties,
         'rented_count': rented_count,
+        'self_use_count': self_use_count,
         'vacant_count': vacant_count,
         'income': {
             'total_monthly_rent': total_monthly_rent,

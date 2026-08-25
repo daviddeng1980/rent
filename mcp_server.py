@@ -148,7 +148,7 @@ def _generate_payments(lease: Lease):
 
 @mcp.tool()
 def list_properties() -> list[dict]:
-    """列出所有房产及其当前状态（出租中/空置）"""
+    """列出所有房产及其当前状态（出租中/空置/自住）"""
     with app.app_context():
         return [_serialize_property(p) for p in Property.query.all()]
 
